@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShopEase | API & Storefront</title>
+  <title>ShopEase | FastAPI Ecommerce</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
@@ -11,42 +11,74 @@
     <header class="topbar">
       <div class="brand">ShopEase</div>
       <nav class="nav-links">
-        <a href="/static/store.html">Store</a>
+        <a href="/store">Store</a>
         <a href="/docs">API Docs</a>
+        <a href="#features">Features</a>
       </nav>
     </header>
 
     <main class="landing-main">
       <section class="landing-hero">
-        <div>
-          <span class="eyebrow">FastAPI Storefront</span>
-          <h1>Separate ecommerce frontend with API backend support.</h1>
-          <p>Launch a dedicated store experience while keeping API documentation available through FastAPI docs.</p>
+        <div class="hero-copy">
+          <span class="eyebrow">API-powered storefront</span>
+          <h1>Launch a beautiful ecommerce experience on Render with FastAPI.</h1>
+          <p>Keep the backend API intact while giving customers a dedicated store, product discovery, cart management, and checkout preview.</p>
           <div class="hero-actions">
-            <a href="/static/store.html" class="btn btn-primary">Open Store</a>
-            <a href="/docs" class="btn btn-outline">View API Docs</a>
+            <a href="/store" class="btn btn-primary">Open Store</a>
+            <a href="/docs" class="btn btn-outline">Explore API Docs</a>
+          </div>
+          <div class="hero-highlights">
+            <div>
+              <strong>Polished storefront</strong>
+              <p>A clean shopping experience that works across mobile and desktop.</p>
+            </div>
+            <div>
+              <strong>FastAPI backend</strong>
+              <p>API routes remain available for integrations, docs, and automation.</p>
+            </div>
+            <div>
+              <strong>Render-ready</strong>
+              <p>Deployed live with a modern UI and complete API accessibility.</p>
+            </div>
           </div>
         </div>
-        <div class="hero-panel">
-          <div class="stats-card">
-            <strong>Designed for demo + real use</strong>
-            <p>API routes remain unchanged while the storefront becomes a dedicated shopping interface.</p>
+
+        <aside class="stats-card">
+          <div class="stat-pill">Live on Render</div>
+          <div class="stat-block">
+            <strong>Modern ecommerce UI</strong>
+            <p>Browse products, filter instantly, and manage cart items with ease.</p>
           </div>
           <div class="feature-list">
             <div>
-              <h3>Product search</h3>
-              <p>Filter by name, price, and category.</p>
+              <h3>Fast search</h3>
+              <p>Find items by name, category, or price range.</p>
             </div>
             <div>
-              <h3>Detail modal</h3>
-              <p>Preview item details without leaving the page.</p>
+              <h3>Wishlist flow</h3>
+              <p>Save favorites to review later and keep shopping momentum.</p>
             </div>
             <div>
-              <h3>Cart summary</h3>
-              <p>See totals and item counts in a clean order summary.</p>
+              <h3>Developer friendly</h3>
+              <p>Use `/docs` for API testing and integration preview.</p>
             </div>
           </div>
-        </div>
+        </aside>
+      </section>
+
+      <section id="features" class="feature-row">
+        <article>
+          <h3>Designed for real product discovery</h3>
+          <p>Build a storefront that feels polished without touching your backend code.</p>
+        </article>
+        <article>
+          <h3>Responsive and fast</h3>
+          <p>Every page adapts to mobile screens, with fast load times and a bright, modern look.</p>
+        </article>
+        <article>
+          <h3>Store + API together</h3>
+          <p>The store is the customer-facing frontend, while `/docs` stays available for backend development.</p>
+        </article>
       </section>
     </main>
   </div>
