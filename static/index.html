@@ -3,224 +3,52 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>E-commerce API Demo</title>
+  <title>ShopEase | API & Storefront</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
-  <header>
-    <div class="container">
-      <h1>E-commerce API Demo</h1>
-      <p>Test user signup, login, products, cart, and wishlist from a lightweight frontend.</p>
-    </div>
-  </header>
-  <main class="container">
-    <section class="panel">
-      <h2>Authentication</h2>
-      <div class="grid">
-        <form id="register-form" class="form-card">
-          <h3>Register</h3>
-          <label>Username<span>*</span></label>
-          <input id="register-username" type="text" placeholder="john" required />
-          <label>Email<span>*</span></label>
-          <input id="register-email" type="email" placeholder="john@example.com" required />
-          <label>Password<span>*</span></label>
-          <input id="register-password" type="password" placeholder="password" required />
-          <button type="submit">Register</button>
-        </form>
+  <div class="page-shell landing-shell">
+    <header class="topbar">
+      <div class="brand">ShopEase</div>
+      <nav class="nav-links">
+        <a href="/static/store.html">Store</a>
+        <a href="/docs">API Docs</a>
+      </nav>
+    </header>
 
-        <form id="login-form" class="form-card">
-          <h3>Login</h3>
-          <label>Username<span>*</span></label>
-          <input id="login-username" type="text" placeholder="john" required />
-          <label>Password<span>*</span></label>
-          <input id="login-password" type="password" placeholder="password" required />
-          <button type="submit">Login</button>
-        </form>
-      </div>
-      <div id="auth-message" class="message"></div>
-    </section>
-
-    <section class="panel">
-      <h2>Products</h2>
-      <div class="toolbar">
-        <button id="load-products">Load Products</button>
-      </div>
-      <div id="products" class="cards"></div>
-    </section>
-
-    <section class="panel">
-      <h2>Cart & Wishlist</h2>
-      <div class="toolbar">
-        <button id="load-cart">Load Cart</button>
-        <button id="load-wishlist">Load Wishlist</button>
-      </div>
-      <div id="cart-items" class="cards"></div>
-      <div id="wishlist-items" class="cards"></div>
-    </section>
-  </main>
-
-  <script>
-    const authMessage = document.getElementById('auth-message');
-    const productsContainer = document.getElementById('products');
-    const cartContainer = document.getElementById('cart-items');
-    const wishlistContainer = document.getElementById('wishlist-items');
-
-    const state = {
-      token: null,
-      user: null,
-    };
-
-    async function apiFetch(path, options = {}) {
-      const headers = options.headers || {};
-      headers['Content-Type'] = 'application/json';
-      if (state.token) {
-        headers['Authorization'] = `Bearer ${state.token}`;
-      }
-      const response = await fetch(path, { ...options, headers });
-      return response.json();
-    }
-
-    async function registerUser(event) {
-      event.preventDefault();
-      const username = document.getElementById('register-username').value.trim();
-      const email = document.getElementById('register-email').value.trim();
-      const password = document.getElementById('register-password').value;
-
-      const result = await apiFetch('/users/', {
-        method: 'POST',
-        body: JSON.stringify({ username, email, password })
-      });
-
-      authMessage.textContent = result.message || JSON.stringify(result);
-    }
-
-    async function loginUser(event) {
-      event.preventDefault();
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value;
-      const body = new URLSearchParams();
-      body.append('username', username);
-      body.append('password', password);
-
-      const response = await fetch('/login', {
-        method: 'POST',
-        body,
-      });
-      const result = await response.json();
-
-      if (result.access_token) {
-        state.token = result.access_token;
-        state.user = result.user;
-        authMessage.textContent = `Logged in as ${result.user.username}`;
-      } else {
-        authMessage.textContent = result.detail || 'Login failed';
-      }
-    }
-
-    function createCard(title, content) {
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `<strong>${title}</strong><div>${content}</div>`;
-      return card;
-    }
-
-    async function loadProducts() {
-      const result = await apiFetch('/products');
-      productsContainer.innerHTML = '';
-      if (!result.products || !result.products.length) {
-        productsContainer.textContent = 'No products available yet.';
-        return;
-      }
-      result.products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-          <h3>${product.title}</h3>
-          <p>${product.description || 'No description'}</p>
-          <p>Price: $${product.price.toFixed(2)} | Stock: ${product.stock}</p>
-          <div class="card-actions">
-            <button data-name="${product.title}" data-price="${product.price}" class="add-cart">Add to Cart</button>
-            <button data-name="${product.title}" class="add-wishlist">Add to Wishlist</button>
+    <main class="landing-main">
+      <section class="landing-hero">
+        <div>
+          <span class="eyebrow">FastAPI Storefront</span>
+          <h1>Separate ecommerce frontend with API backend support.</h1>
+          <p>Launch a dedicated store experience while keeping API documentation available through FastAPI docs.</p>
+          <div class="hero-actions">
+            <a href="/static/store.html" class="btn btn-primary">Open Store</a>
+            <a href="/docs" class="btn btn-outline">View API Docs</a>
           </div>
-        `;
-        productsContainer.appendChild(card);
-      });
-    }
-
-    async function addToCart(productName, price) {
-      if (!state.token) {
-        authMessage.textContent = 'Login first to use the cart.';
-        return;
-      }
-      const result = await apiFetch('/cart/', {
-        method: 'POST',
-        body: JSON.stringify({ product_name: productName, quantity: 1, price })
-      });
-      authMessage.textContent = result.message || JSON.stringify(result);
-    }
-
-    async function addToWishlist(productName) {
-      if (!state.token) {
-        authMessage.textContent = 'Login first to use the wishlist.';
-        return;
-      }
-      const result = await apiFetch('/wishlist/', {
-        method: 'POST',
-        body: JSON.stringify({ product_name: productName })
-      });
-      authMessage.textContent = result.message || JSON.stringify(result);
-    }
-
-    async function loadCart() {
-      if (!state.token) {
-        authMessage.textContent = 'Login first to view your cart.';
-        return;
-      }
-      const result = await apiFetch('/cart/');
-      cartContainer.innerHTML = '<h3>Cart Items</h3>';
-      if (!result.length) {
-        cartContainer.appendChild(createCard('Cart', 'No items in cart yet.'));
-        return;
-      }
-      result.forEach(item => {
-        cartContainer.appendChild(createCard(item.product_name, `Quantity: ${item.quantity} | Price: $${item.price}`));
-      });
-    }
-
-    async function loadWishlist() {
-      if (!state.token) {
-        authMessage.textContent = 'Login first to view your wishlist.';
-        return;
-      }
-      const result = await apiFetch('/wishlist/');
-      wishlistContainer.innerHTML = '<h3>Wishlist</h3>';
-      if (!result.length) {
-        wishlistContainer.appendChild(createCard('Wishlist', 'No wishlist items yet.'));
-        return;
-      }
-      result.forEach(item => {
-        wishlistContainer.appendChild(createCard(item.product_name, `Saved for: ${item.user || 'you'}`));
-      });
-    }
-
-    document.getElementById('register-form').addEventListener('submit', registerUser);
-    document.getElementById('login-form').addEventListener('submit', loginUser);
-    document.getElementById('load-products').addEventListener('click', loadProducts);
-    document.getElementById('load-cart').addEventListener('click', loadCart);
-    document.getElementById('load-wishlist').addEventListener('click', loadWishlist);
-
-    productsContainer.addEventListener('click', event => {
-      if (event.target.matches('.add-cart')) {
-        addToCart(event.target.dataset.name, event.target.dataset.price);
-      }
-      if (event.target.matches('.add-wishlist')) {
-        addToWishlist(event.target.dataset.name);
-      }
-    });
-
-    window.addEventListener('DOMContentLoaded', () => {
-      loadProducts();
-    });
-  </script>
+        </div>
+        <div class="hero-panel">
+          <div class="stats-card">
+            <strong>Designed for demo + real use</strong>
+            <p>API routes remain unchanged while the storefront becomes a dedicated shopping interface.</p>
+          </div>
+          <div class="feature-list">
+            <div>
+              <h3>Product search</h3>
+              <p>Filter by name, price, and category.</p>
+            </div>
+            <div>
+              <h3>Detail modal</h3>
+              <p>Preview item details without leaving the page.</p>
+            </div>
+            <div>
+              <h3>Cart summary</h3>
+              <p>See totals and item counts in a clean order summary.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
 </body>
 </html>

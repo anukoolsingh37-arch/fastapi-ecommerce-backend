@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopEase Store</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand">ShopEase</div>
+      <nav class="nav-links">
+        <a href="#shop">Shop</a>
+        <a href="#cart">Cart</a>
+        <a href="#wishlist">Wishlist</a>
+      </nav>
+      <a href="/docs" class="btn btn-secondary btn-sm">API Docs</a>
+    </header>
+
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">Modern ecommerce</span>
+        <h1>Browse products, save favorites, and checkout in style.</h1>
+        <p>Use this dedicated storefront for your FastAPI backend. Search, filter, and preview products with a sleek shopping experience.</p>
+        <div class="hero-actions">
+          <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+          <button id="refresh-products" class="btn btn-outline">Refresh Products</button>
+        </div>
+        <div class="hero-highlights">
+          <div>
+            <strong>Fast search</strong>
+            <span>Filter by name, price, and category.</span>
+          </div>
+          <div>
+            <strong>Product details</strong>
+            <span>Open the detail modal for each item.</span>
+          </div>
+          <div>
+            <strong>Cart totals</strong>
+            <span>See order summary instantly.</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="auth-panel">
+        <div class="auth-card">
+          <div class="auth-header">
+            <div>
+              <h2>Member access</h2>
+              <p>Login to add items to cart and wishlist, then checkout effortlessly.</p>
+            </div>
+          </div>
+          <div class="auth-forms">
+            <form id="login-form" class="form-sm">
+              <label>Username</label>
+              <input id="login-username" type="text" placeholder="john" required />
+              <label>Password</label>
+              <input id="login-password" type="password" placeholder="password" required />
+              <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
+            </form>
+            <form id="register-form" class="form-sm">
+              <label>Username</label>
+              <input id="register-username" type="text" placeholder="jane" required />
+              <label>Email</label>
+              <input id="register-email" type="email" placeholder="jane@example.com" required />
+              <label>Password</label>
+              <input id="register-password" type="password" placeholder="password" required />
+              <button type="submit" class="btn btn-outline btn-sm">Create Account</button>
+            </form>
+          </div>
+          <div id="auth-message" class="auth-message">Login to enable cart and wishlist actions.</div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="filter-panel">
+      <div class="filter-group">
+        <label>Search products</label>
+        <input id="search-input" type="search" placeholder="Search by name" />
+      </div>
+      <div class="filter-group">
+        <label>Category</label>
+        <div class="pill-group" id="category-filter">
+          <button class="pill active" data-category="All">All</button>
+          <button class="pill" data-category="Electronics">Electronics</button>
+          <button class="pill" data-category="Fashion">Fashion</button>
+          <button class="pill" data-category="Home">Home</button>
+          <button class="pill" data-category="Accessories">Accessories</button>
+        </div>
+      </div>
+      <div class="filter-group inline-group">
+        <div>
+          <label>Min price</label>
+          <input id="min-price" type="number" step="0.01" placeholder="0" />
+        </div>
+        <div>
+          <label>Max price</label>
+          <input id="max-price" type="number" step="0.01" placeholder="500" />
+        </div>
+      </div>
+    </section>
+
+    <section id="shop" class="shop-section">
+      <div class="section-heading">
+        <div>
+          <h2>Featured Products</h2>
+          <p>Search and filter products instantly, then view details or add to cart.</p>
+        </div>
+      </div>
+      <div id="products" class="product-grid"></div>
+    </section>
+
+    <section class="mini-panels">
+      <div class="panel-sm">
+        <div class="panel-header">
+          <div>
+            <h3>Shopping Cart</h3>
+            <p class="panel-subtitle">Subtotal and item summary</p>
+          </div>
+          <button id="load-cart" class="btn btn-secondary btn-sm">Refresh</button>
+        </div>
+        <div id="cart-summary" class="panel-summary"></div>
+        <div id="cart-items" class="panel-list"></div>
+      </div>
+      <div class="panel-sm">
+        <div class="panel-header">
+          <div>
+            <h3>Wishlist</h3>
+            <p class="panel-subtitle">Saved items for later</p>
+          </div>
+          <button id="load-wishlist" class="btn btn-secondary btn-sm">Refresh</button>
+        </div>
+        <div id="wishlist-items" class="panel-list"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="product-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button id="close-modal" class="modal-close">×</button>
+      <div class="modal-grid">
+        <div class="detail-image">
+          <img id="modal-image" src="" alt="Product image" />
+        </div>
+        <div class="detail-info">
+          <div class="tag">FastAPI</div>
+          <h2 id="modal-name"></h2>
+          <p id="modal-description"></p>
+          <div class="card-meta">
+            <strong id="modal-price"></strong>
+            <span id="modal-stock"></span>
+          </div>
+          <div class="detail-buttons">
+            <button id="modal-add-cart" class="btn btn-primary btn-full">Add to Cart</button>
+            <button id="modal-add-wishlist" class="btn btn-outline btn-full">Wishlist</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const authMessage = document.getElementById('auth-message');
+    const productsContainer = document.getElementById('products');
+    const cartContainer = document.getElementById('cart-items');
+    const wishlistContainer = document.getElementById('wishlist-items');
+    const cartSummary = document.getElementById('cart-summary');
+    const categoryButtons = document.querySelectorAll('#category-filter .pill');
+    const searchInput = document.getElementById('search-input');
+    const minPriceInput = document.getElementById('min-price');
+    const maxPriceInput = document.getElementById('max-price');
+    const productModal = document.getElementById('product-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalName = document.getElementById('modal-name');
+    const modalDescription = document.getElementById('modal-description');
+    const modalPrice = document.getElementById('modal-price');
+    const modalStock = document.getElementById('modal-stock');
+    const modalAddCart = document.getElementById('modal-add-cart');
+    const modalAddWishlist = document.getElementById('modal-add-wishlist');
+
+    let selectedProduct = null;
+    let activeCategory = 'All';
+    const state = {
+      token: null,
+      user: null,
+    };
+
+    async function apiFetch(path, options = {}) {
+      const headers = options.headers || {};
+      headers['Content-Type'] = 'application/json';
+      if (state.token) {
+        headers['Authorization'] = `Bearer ${state.token}`;
+      }
+      const response = await fetch(path, { ...options, headers });
+      return response.json();
+    }
+
+    async function registerUser(event) {
+      event.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+
+      const result = await apiFetch('/users/', {
+        method: 'POST',
+        body: JSON.stringify({ username, email, password })
+      });
+
+      authMessage.textContent = result.message || result.detail || 'Registration completed.';
+    }
+
+    async function loginUser(event) {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      const body = new URLSearchParams();
+      body.append('username', username);
+      body.append('password', password);
+
+      const response = await fetch('/login', {
+        method: 'POST',
+        body,
+      });
+      const result = await response.json();
+
+      if (result.access_token) {
+        state.token = result.access_token;
+        state.user = result.user;
+        authMessage.textContent = `Logged in as ${result.user.username}`;
+      } else {
+        authMessage.textContent = result.detail || 'Login failed';
+      }
+    }
+
+    function deriveCategory(title) {
+      const normalized = title.toLowerCase();
+      if (normalized.includes('shoe') || normalized.includes('fashion') || normalized.includes('shirt') || normalized.includes('jeans')) return 'Fashion';
+      if (normalized.includes('phone') || normalized.includes('laptop') || normalized.includes('camera') || normalized.includes('smart')) return 'Electronics';
+      if (normalized.includes('lamp') || normalized.includes('sofa') || normalized.includes('mug') || normalized.includes('desk')) return 'Home';
+      if (normalized.includes('bag') || normalized.includes('watch') || normalized.includes('belt') || normalized.includes('hat')) return 'Accessories';
+      return 'All';
+    }
+
+    function getImageUrl(product) {
+      return product.image && product.image.trim()
+        ? product.image
+        : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80';
+    }
+
+    function createPanelItem(title, subtitle) {
+      const card = document.createElement('div');
+      card.className = 'panel-card';
+      card.innerHTML = `<strong>${title}</strong><span>${subtitle}</span>`;
+      return card;
+    }
+
+    function renderProducts(products) {
+      productsContainer.innerHTML = '';
+      if (!products.length) {
+        productsContainer.append(createPanelItem('No products found', 'Try adjusting your filters or refresh the list.'));
+        return;
+      }
+      products.forEach(product => {
+        const card = document.createElement('article');
+        card.className = 'product-card';
+        const category = deriveCategory(product.title);
+        card.innerHTML = `
+          <div class="card-media">
+            <img src="${getImageUrl(product)}" alt="${product.title}" />
+          </div>
+          <div class="card-body">
+            <div class="tag">${category}</div>
+            <h3>${product.title}</h3>
+            <p>${product.description || 'Premium product available from ShopEase.'}</p>
+            <div class="card-meta">
+              <span>$${product.price.toFixed(2)}</span>
+              <small>${product.stock} in stock</small>
+            </div>
+            <div class="card-actions">
+              <button data-name="${product.title}" data-price="${product.price}" data-image="${getImageUrl(product)}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-stock="${product.stock}" class="btn btn-primary btn-full add-cart">Add to Cart</button>
+              <button data-name="${product.title}" data-price="${product.price}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-image="${getImageUrl(product)}" data-stock="${product.stock}" class="btn btn-outline btn-full view-details">Details</button>
+            </div>
+          </div>
+        `;
+        productsContainer.appendChild(card);
+      });
+    }
+
+    async function loadProducts() {
+      const name = searchInput.value.trim();
+      const minPrice = parseFloat(minPriceInput.value);
+      const maxPrice = parseFloat(maxPriceInput.value);
+
+      const params = new URLSearchParams();
+      if (name) params.set('name', name);
+      if (!Number.isNaN(minPrice)) params.set('min_price', minPrice);
+      if (!Number.isNaN(maxPrice)) params.set('max_price', maxPrice);
+
+      const path = `/products/search?${params.toString()}`;
+      const products = await apiFetch(path);
+      const filtered = products.filter(product => {
+        if (activeCategory === 'All') return true;
+        return deriveCategory(product.title) === activeCategory;
+      });
+      renderProducts(filtered);
+    }
+
+    async function addToCart(productName, price) {
+      if (!state.token) {
+        authMessage.textContent = 'Login first to use the cart.';
+        return;
+      }
+      const result = await apiFetch('/cart/', {
+        method: 'POST',
+        body: JSON.stringify({ product_name: productName, quantity: 1, price })
+      });
+      authMessage.textContent = result.message || JSON.stringify(result);
+      loadCart();
+    }
+
+    async function addToWishlist(productName) {
+      if (!state.token) {
+        authMessage.textContent = 'Login first to use the wishlist.';
+        return;
+      }
+      const result = await apiFetch('/wishlist/', {
+        method: 'POST',
+        body: JSON.stringify({ product_name: productName })
+      });
+      authMessage.textContent = result.message || JSON.stringify(result);
+      loadWishlist();
+    }
+
+    async function loadCart() {
+      if (!state.token) {
+        authMessage.textContent = 'Login first to view your cart.';
+        return;
+      }
+      const result = await apiFetch('/cart/');
+      cartContainer.innerHTML = '';
+      if (!result.length) {
+        cartSummary.textContent = '0 items · $0.00';
+        cartContainer.appendChild(createPanelItem('Your cart is empty', 'Add products to start shopping.'));
+        return;
+      }
+      const total = result.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+      const quantity = result.reduce((sum, item) => sum + item.quantity, 0);
+      cartSummary.textContent = `${quantity} item(s) · $${total.toFixed(2)}`;
+      result.forEach(item => {
+        cartContainer.appendChild(createPanelItem(item.product_name, `Qty ${item.quantity} · $${item.price.toFixed(2)}`));
+      });
+    }
+
+    async function loadWishlist() {
+      if (!state.token) {
+        authMessage.textContent = 'Login first to view your wishlist.';
+        return;
+      }
+      const result = await apiFetch('/wishlist/');
+      wishlistContainer.innerHTML = '';
+      if (!result.length) {
+        wishlistContainer.appendChild(createPanelItem('Wishlist is empty', 'Save your favorite products here.'));
+        return;
+      }
+      result.forEach(item => {
+        wishlistContainer.appendChild(createPanelItem(item.product_name, item.user || 'Saved item'));
+      });
+    }
+
+    function openModal(product) {
+      selectedProduct = product;
+      modalImage.src = getImageUrl(product);
+      modalName.textContent = product.title;
+      modalDescription.textContent = product.description || 'Premium product available from ShopEase.';
+      modalPrice.textContent = `$${product.price.toFixed(2)}`;
+      modalStock.textContent = `${product.stock} in stock`;
+      productModal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+      productModal.classList.add('hidden');
+      selectedProduct = null;
+    }
+
+    document.getElementById('register-form').addEventListener('submit', registerUser);
+    document.getElementById('login-form').addEventListener('submit', loginUser);
+    document.getElementById('apply-filters').addEventListener('click', loadProducts);
+    document.getElementById('refresh-products').addEventListener('click', () => {
+      searchInput.value = '';
+      minPriceInput.value = '';
+      maxPriceInput.value = '';
+      activeCategory = 'All';
+      categoryButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.category === 'All'));
+      loadProducts();
+    });
+    document.getElementById('load-cart').addEventListener('click', loadCart);
+    document.getElementById('load-wishlist').addEventListener('click', loadWishlist);
+    document.getElementById('close-modal').addEventListener('click', closeModal);
+    document.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+
+    categoryButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCategory = btn.dataset.category;
+        categoryButtons.forEach(button => button.classList.toggle('active', button === btn));
+        loadProducts();
+      });
+    });
+
+    productsContainer.addEventListener('click', event => {
+      if (event.target.matches('.add-cart')) {
+        const { name, price } = event.target.dataset;
+        addToCart(name, parseFloat(price));
+      }
+      if (event.target.matches('.view-details')) {
+        const title = event.target.dataset.name;
+        const price = parseFloat(event.target.dataset.price);
+        const description = event.target.dataset.description;
+        const image = event.target.dataset.image;
+        const stock = parseInt(event.target.dataset.stock, 10) || 0;
+        openModal({ title, price, description, image, stock });
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadProducts();
+      loadCart();
+      loadWishlist();
+    });
+  </script>
+</body>
+</html>

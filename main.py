@@ -27,6 +27,12 @@ app.include_router(wishlist.router)
 app.include_router(coupons.router)
 app.include_router(reviews.router)
 
+@app.get("/store", response_class=HTMLResponse)
+def store():
+    with open("static/store.html", "r", encoding="utf-8") as f:
+        return f.read()
+
+
 @app.get("/", response_class=HTMLResponse)
 def home():
     with open("static/index.html", "r", encoding="utf-8") as f:
