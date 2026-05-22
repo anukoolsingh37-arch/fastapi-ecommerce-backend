@@ -39,6 +39,16 @@ class Product(BaseModel):
     featured: bool = False
 
 
+class ProductUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    price: Optional[float] = None
+    stock: Optional[int] = None
+    image: Optional[str] = None
+    category_id: Optional[int] = None
+    featured: Optional[bool] = None
+
+
 class ProductResponse(BaseModel):
     id: int
     title: str

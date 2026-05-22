@@ -273,7 +273,7 @@ def get_product_review_summary(
 @router.put("/products/{product_id}")
 def update_product(
     product_id: int,
-    product: schemas.Product,
+    product: schemas.ProductUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -293,13 +293,20 @@ def update_product(
             detail="Product not found"
         )
 
-    existing_product.title = product.title
-    existing_product.description = product.description
-    existing_product.price = product.price
-    existing_product.stock = product.stock
-    existing_product.image = product.image
-    existing_product.category_id = product.category_id
-    existing_product.featured = product.featured
+    if product.title is not None:
+        existing_product.title = product.title
+    if product.description is not None:
+        existing_product.description = product.description
+    if product.price is not None:
+        existing_product.price = product.price
+    if product.stock is not None:
+        existing_product.stock = product.stock
+    if product.image is not None:
+        existing_product.image = product.image
+    if product.category_id is not None:
+        existing_product.category_id = product.category_id
+    if product.featured is not None:
+        existing_product.featured = product.featured
 
     db.commit()
 
