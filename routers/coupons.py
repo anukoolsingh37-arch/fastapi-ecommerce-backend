@@ -17,8 +17,13 @@ router = APIRouter(
 def create_coupon(
     coupon: schemas.CouponBase,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
     existing = db.query(models.Coupon).filter(
         models.Coupon.code == coupon.code
     ).first()
@@ -75,8 +80,13 @@ def update_coupon(
     coupon_id: int,
     coupon_data: schemas.CouponBase,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
     coupon = db.query(models.Coupon).filter(
         models.Coupon.id == coupon_id
     ).first()
@@ -104,8 +114,13 @@ def update_coupon(
 def delete_coupon(
     coupon_id: int,
     db: Session = Depends(get_db),
-    current_user: str = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user)
 ):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
     coupon = db.query(models.Coupon).filter(
         models.Coupon.id == coupon_id
     ).first()

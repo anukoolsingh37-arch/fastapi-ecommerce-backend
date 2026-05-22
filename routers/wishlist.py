@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 import models
@@ -15,13 +15,23 @@ router = APIRouter(
 
 @router.post("/")
 def add_to_wishlist(
-    item: schemas.Wishlist,
+    item: schemas.WishlistItem,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
+    product = db.query(models.Product).filter(
+        models.Product.id == item.product_id
+    ).first()
+
+    if not product:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
 
     new_item = models.Wishlist(
-        product_name=item.product_name,
+        product_id=product.id,
+        product_name=product.title,
         user=current_user["email"]
     )
 
@@ -48,6 +58,60 @@ def get_wishlist(
     return wishlist
 
 
+@router.post("/{wishlist_id}/move-to-cart")
+def move_wishlist_item_to_cart(
+    wishlist_id: int,
+    cart_data: schemas.CartUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    wishlist_item = db.query(models.Wishlist).filter(
+        models.Wishlist.id == wishlist_id,
+        models.Wishlist.user == current_user["email"]
+    ).first()
+
+    if not wishlist_item:
+        raise HTTPException(
+            status_code=404,
+            detail="Wishlist item not found"
+        )
+
+    product = db.query(models.Product).filter(
+        models.Product.id == wishlist_item.product_id
+    ).first()
+
+    if not product:
+        raise HTTPException(
+            status_code=404,
+            detail="Product not found"
+        )
+
+    if product.stock < cart_data.quantity:
+        raise HTTPException(
+            status_code=400,
+            detail="Not enough stock available"
+        )
+
+    new_cart_item = models.Cart(
+        product_id=product.id,
+        product_name=product.title,
+        quantity=cart_data.quantity,
+        price=product.price,
+        user_id=current_user["id"]
+    )
+
+    product.stock -= cart_data.quantity
+    db.delete(wishlist_item)
+    db.add(new_cart_item)
+    db.commit()
+    db.refresh(new_cart_item)
+
+    return {
+        "message": "Wishlist item moved to cart",
+        "cart_item": new_cart_item
+    }
+
+
 @router.delete("/{wishlist_id}")
 def remove_from_wishlist(
     wishlist_id: int,
@@ -61,9 +125,10 @@ def remove_from_wishlist(
     ).first()
 
     if not item:
-        return {
-            "message": "Wishlist item not found"
-        }
+        raise HTTPException(
+            status_code=404,
+            detail="Wishlist item not found"
+        )
 
     db.delete(item)
     db.commit()

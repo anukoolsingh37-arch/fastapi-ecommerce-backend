@@ -10,6 +10,7 @@ class User(Base):
     username = Column(String, unique=True)
     email = Column(String, unique=True)
     password = Column(String)
+    is_admin = Column(Boolean, default=False)
 
 
 class Product(Base):
@@ -21,18 +22,41 @@ class Product(Base):
     price = Column(Float)
     stock = Column(Integer, default=0)
     image = Column(String)
+    category_id = Column(Integer, ForeignKey("categories.id"), nullable=True)
+    featured = Column(Boolean, default=False)
+
+
+class Category(Base):
+    __tablename__ = "categories"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    description = Column(String, nullable=True)
 
 
 class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"), nullable=True)
     product_name = Column(String)
     quantity = Column(Integer)
     total_price = Column(Float)
     discount_amount = Column(Float, default=0.0)
     coupon_code = Column(String, nullable=True)
     customer = Column(String)
+    status = Column(String, default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class Shipment(Base):
+    __tablename__ = "shipments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"))
+    status = Column(String)
+    location = Column(String, nullable=True)
+    notes = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
@@ -64,6 +88,7 @@ class Cart(Base):
     __tablename__ = "cart"
 
     id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
     product_name = Column(String)
     quantity = Column(Integer)
     price = Column(Float)
@@ -73,5 +98,6 @@ class Wishlist(Base):
     __tablename__ = "wishlist"
 
     id = Column(Integer, primary_key=True, index=True)
+    product_id = Column(Integer, ForeignKey("products.id"))
     product_name = Column(String)
     user = Column(String)

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopEase Orders</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="page-shell store-shell">
+    <header class="topbar">
+      <div class="brand">ShopEase</div>
+      <nav class="nav-links">
+        <a href="/store">Store</a>
+        <a href="/product?id=1">Sample Product</a>
+        <a href="/docs">API Docs</a>
+      </nav>
+    </header>
+
+    <main class="store-main">
+      <section class="store-hero">
+        <div class="hero-copy">
+          <span class="eyebrow">My orders</span>
+          <h1>Track your orders and checkout your cart.</h1>
+          <p>See your order history, preview your shopping cart, and complete checkout in one place.</p>
+          <div class="hero-actions">
+            <button id="refresh-orders" class="btn btn-primary">Refresh Orders</button>
+            <button id="refresh-cart" class="btn btn-outline">Refresh Cart</button>
+          </div>
+          <div class="hero-highlights">
+            <div>
+              <strong>Order history</strong>
+              <p>Review all orders placed with your account.</p>
+            </div>
+            <div>
+              <strong>Cart checkout</strong>
+              <p>Apply a coupon and place a single order from your cart.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="auth-card">
+          <div class="auth-header">
+            <div>
+              <h2>Account</h2>
+              <p>Login or register to manage your orders.</p>
+            </div>
+          </div>
+          <div class="auth-forms">
+            <form id="login-form" class="form-sm">
+              <label>Username</label>
+              <input id="login-username" type="text" placeholder="demo" required />
+              <label>Password</label>
+              <input id="login-password" type="password" placeholder="demopass" required />
+              <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
+            </form>
+            <form id="register-form" class="form-sm">
+              <label>Username</label>
+              <input id="register-username" type="text" placeholder="newuser" required />
+              <label>Email</label>
+              <input id="register-email" type="email" placeholder="you@example.com" required />
+              <label>Password</label>
+              <input id="register-password" type="password" placeholder="password" required />
+              <button type="submit" class="btn btn-outline btn-sm">Sign Up</button>
+            </form>
+          </div>
+          <div id="auth-message" class="auth-message"></div>
+          <button id="logout-button" class="btn btn-secondary btn-sm">Log Out</button>
+        </aside>
+      </section>
+
+      <section class="mini-panels">
+        <div class="panel-sm">
+          <div class="panel-header">
+            <div>
+              <h3>Cart preview</h3>
+              <p>Items ready for checkout.</p>
+            </div>
+          </div>
+          <div class="panel-summary" id="cart-summary">Loading cart…</div>
+          <div id="cart-items" class="panel-list"></div>
+          <div style="margin-top: 18px; display: grid; gap: 12px;">
+            <input id="coupon-code" type="text" placeholder="Coupon code" style="width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid #cbd5e1;" />
+            <button id="checkout-button" class="btn btn-primary btn-full">Checkout Cart</button>
+          </div>
+        </div>
+
+        <div class="panel-sm">
+          <div class="panel-header">
+            <div>
+              <h3>Order history</h3>
+              <p>Your recent purchases.</p>
+            </div>
+          </div>
+          <div id="orders-list" class="panel-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const logoutButton = document.getElementById('logout-button');
+    const authMessage = document.getElementById('auth-message');
+    const cartSummary = document.getElementById('cart-summary');
+    const cartItems = document.getElementById('cart-items');
+    const ordersList = document.getElementById('orders-list');
+    const couponInput = document.getElementById('coupon-code');
+    const checkoutButton = document.getElementById('checkout-button');
+    const refreshCartButton = document.getElementById('refresh-cart');
+    const refreshOrdersButton = document.getElementById('refresh-orders');
+
+    async function renderCart() {
+      if (!state.token) {
+        authMessage.textContent = 'Login to view your cart.';
+        cartItems.innerHTML = '';
+        cartSummary.textContent = 'Sign in to see your cart.';
+        return;
+      }
+      try {
+        const items = await apiFetch('/cart/');
+        if (!items.length) {
+          cartSummary.textContent = 'Your cart is empty.';
+          cartItems.innerHTML = '';
+          cartItems.appendChild(createPanelItem('No cart items', 'Add products from the store first.'));
+          return;
+        }
+        const total = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+        cartSummary.textContent = `${items.length} item(s) · $${total.toFixed(2)}`;
+        cartItems.innerHTML = '';
+        items.forEach(item => {
+          cartItems.appendChild(createPanelItem(item.product_name, `Qty ${item.quantity} · $${item.price.toFixed(2)}`));
+        });
+      } catch (error) {
+        cartSummary.textContent = error.detail || 'Unable to load cart.';
+      }
+    }
+
+    async function renderOrders() {
+      if (!state.token) {
+        authMessage.textContent = 'Login to view orders.';
+        ordersList.innerHTML = '';
+        return;
+      }
+      try {
+        const orders = await apiFetch('/orders/history');
+        ordersList.innerHTML = '';
+        if (!orders.length) {
+          ordersList.appendChild(createPanelItem('No orders yet', 'Place an order from your cart to get started.'));
+          return;
+        }
+        orders.forEach(order => {
+          ordersList.appendChild(createPanelItem(`Order #${order.id} • ${order.status}`, `${order.product_name} • $${order.total_price.toFixed(2)}`));
+        });
+      } catch (error) {
+        ordersList.innerHTML = '';
+        ordersList.appendChild(createPanelItem('Unable to load orders', error.detail || 'Try again later.'));
+      }
+    }
+
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      try {
+        const result = await loginUser(username, password);
+        authMessage.textContent = `Signed in as ${result.user.username}`;
+        renderCart();
+        renderOrders();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Login failed';
+      }
+    });
+
+    registerForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+      try {
+        const result = await registerUser(username, email, password);
+        authMessage.textContent = result.message || 'Account created successfully.';
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Registration failed';
+      }
+    });
+
+    logoutButton.addEventListener('click', () => {
+      logoutUser();
+      renderCart();
+      renderOrders();
+    });
+
+    refreshCartButton.addEventListener('click', renderCart);
+    refreshOrdersButton.addEventListener('click', renderOrders);
+
+    checkoutButton.addEventListener('click', async () => {
+      if (!state.token) {
+        authMessage.textContent = 'Login before checking out.';
+        return;
+      }
+      try {
+        const result = await apiFetch('/cart/checkout', {
+          method: 'POST',
+          body: { coupon_code: couponInput.value.trim() || null }
+        });
+        authMessage.textContent = result.message || 'Order completed.';
+        renderCart();
+        renderOrders();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to complete checkout.';
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      ensureAuthMessage();
+      renderCart();
+      renderOrders();
+    });
+  </script>
+</body>
+</html>

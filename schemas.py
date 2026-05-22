@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, time
 
 from pydantic import BaseModel
 from typing import List, Optional
@@ -8,6 +8,16 @@ class UserBase(BaseModel):
     username: str
     email: str
     password: str
+
+
+class UserProfile(BaseModel):
+    id: int
+    username: str
+    email: str
+    is_admin: bool = False
+
+    class Config:
+        from_attributes = True
 
 
 class UserResponse(BaseModel):
@@ -25,6 +35,8 @@ class Product(BaseModel):
     price: float
     stock: int
     image: str
+    category_id: Optional[int] = None
+    featured: bool = False
 
 
 class ProductResponse(BaseModel):
@@ -34,6 +46,8 @@ class ProductResponse(BaseModel):
     price: float
     stock: int
     image: str
+    category_id: Optional[int] = None
+    featured: bool = False
 
     class Config:
         from_attributes = True
@@ -44,8 +58,8 @@ class Login(BaseModel):
     password: str
 
 
-class Order(BaseModel):
-    product_name: str
+class OrderCreate(BaseModel):
+    product_id: int
     quantity: int
     coupon_code: Optional[str] = None
 
@@ -61,6 +75,30 @@ class OrderResponse(BaseModel):
     discount_amount: float
     coupon_code: Optional[str]
     customer: str
+    status: str
+
+    class Config:
+        from_attributes = True
+
+
+class OrderStatusUpdate(BaseModel):
+    status: str
+
+
+class ShipmentBase(BaseModel):
+    order_id: int
+    status: str
+    location: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class ShipmentResponse(BaseModel):
+    id: int
+    order_id: int
+    status: str
+    location: Optional[str]
+    notes: Optional[str]
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -68,6 +106,10 @@ class OrderResponse(BaseModel):
 
 class InventoryUpdate(BaseModel):
     stock: int
+
+
+class CartUpdate(BaseModel):
+    quantity: int
 
 
 class CouponBase(BaseModel):
@@ -93,6 +135,20 @@ class CouponResponse(BaseModel):
         from_attributes = True
 
 
+class CategoryBase(BaseModel):
+    name: str
+    description: Optional[str] = None
+
+
+class CategoryResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
 class ReviewBase(BaseModel):
     product_id: int
     rating: int
@@ -112,13 +168,17 @@ class ReviewResponse(BaseModel):
 
 
 class CartBase(BaseModel):
-    product_name: str
+    product_id: int
     quantity: int
-    price: float
+
+
+class CartCheckout(BaseModel):
+    coupon_code: Optional[str] = None
 
 
 class CartDisplay(BaseModel):
     id: int
+    product_id: int
     product_name: str
     quantity: int
     price: float
@@ -127,12 +187,14 @@ class CartDisplay(BaseModel):
     class Config:
         from_attributes = True
 
-class Wishlist(BaseModel):
-    product_name: str
+
+class WishlistItem(BaseModel):
+    product_id: int
 
 
 class WishlistResponse(BaseModel):
     id: int
+    product_id: int
     product_name: str
     user: str
 

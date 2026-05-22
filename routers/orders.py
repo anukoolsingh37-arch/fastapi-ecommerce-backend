@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, date, time
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import models
@@ -15,15 +16,15 @@ router = APIRouter(
 )
 
 
-@router.post("/")
+@router.post("/", response_model=schemas.OrderResponse)
 def create_order(
-    order: schemas.Order,
+    order: schemas.OrderCreate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
 
     product = db.query(models.Product).filter(
-        models.Product.title == order.product_name
+        models.Product.id == order.product_id
     ).first()
 
     if not product:
@@ -70,12 +71,14 @@ def create_order(
         coupon.used_count += 1
 
     new_order = models.Order(
+        product_id=product.id,
         product_name=product.title,
         quantity=order.quantity,
         total_price=total_price,
         discount_amount=discount_amount,
         coupon_code=order.coupon_code,
-        customer=current_user["email"]
+        customer=current_user["email"],
+        status="pending"
     )
 
     product.stock -= order.quantity
@@ -84,10 +87,128 @@ def create_order(
     db.commit()
     db.refresh(new_order)
 
+    return new_order
+
+
+@router.get("/history", response_model=list[schemas.OrderResponse])
+def get_order_history(
+    status: str = None,
+    start_date: date = None,
+    end_date: date = None,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    query = db.query(models.Order).filter(
+        models.Order.customer == current_user["email"]
+    )
+
+    if status:
+        query = query.filter(models.Order.status == status)
+
+    if start_date:
+        start_dt = datetime.combine(start_date, time.min)
+        query = query.filter(models.Order.created_at >= start_dt)
+
+    if end_date:
+        end_dt = datetime.combine(end_date, time.max)
+        query = query.filter(models.Order.created_at <= end_dt)
+
+    return query.order_by(models.Order.created_at.desc()).all()
+
+
+@router.get("/admin/sales-summary")
+def get_sales_summary(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
+
+    total_orders = db.query(models.Order).count()
+    total_revenue = db.query(models.Order).with_entities(
+        func.coalesce(func.sum(models.Order.total_price), 0.0)
+    ).scalar() or 0.0
+
+    best_sellers = db.query(
+        models.Order.product_name,
+        func.sum(models.Order.quantity).label("total_quantity"),
+        func.sum(models.Order.total_price).label("total_revenue")
+    ).group_by(models.Order.product_name).order_by(func.sum(models.Order.quantity).desc()).limit(10).all()
+
+    best_sellers_data = [
+        {
+            "product_name": result.product_name,
+            "total_quantity": int(result.total_quantity),
+            "total_revenue": float(result.total_revenue)
+        }
+        for result in best_sellers
+    ]
+
     return {
-        "message": "Order placed successfully",
-        "remaining_stock": product.stock,
-        "order": new_order
+        "total_orders": total_orders,
+        "total_revenue": float(total_revenue),
+        "best_sellers": best_sellers_data
+    }
+
+
+@router.get("/{order_id}")
+def get_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    order = db.query(models.Order).filter(
+        models.Order.id == order_id
+    ).first()
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    if order.customer != current_user["email"] and not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Operation not permitted"
+        )
+
+    return order
+
+
+@router.patch("/{order_id}/status")
+def update_order_status(
+    order_id: int,
+    status_update: schemas.OrderStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
+
+    order = db.query(models.Order).filter(
+        models.Order.id == order_id
+    ).first()
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail="Order not found"
+        )
+
+    order.status = status_update.status
+    db.commit()
+    db.refresh(order)
+
+    return {
+        "message": "Order status updated",
+        "order": order
     }
 
 

@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 import models
 import schemas
 from database import get_db
 from auth.hashing import Hash
+from auth.oauth2 import get_current_user
 
 router = APIRouter(
     prefix="/users",
@@ -12,18 +13,36 @@ router = APIRouter(
 )
 
 
+def require_admin(current_user: dict):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required"
+        )
+
+
 @router.post("/")
 def create_user(user: schemas.UserBase, db: Session = Depends(get_db)):
 
     # check if email already exists
-    existing_user = db.query(models.User).filter(
+    existing_email = db.query(models.User).filter(
         models.User.email == user.email
     ).first()
 
-    if existing_user:
+    if existing_email:
         raise HTTPException(
             status_code=400,
             detail="Email already registered"
+        )
+
+    existing_username = db.query(models.User).filter(
+        models.User.username == user.username
+    ).first()
+
+    if existing_username:
+        raise HTTPException(
+            status_code=400,
+            detail="Username already taken"
         )
 
     hashed_password = Hash.bcrypt(user.password)
@@ -50,15 +69,33 @@ def create_user(user: schemas.UserBase, db: Session = Depends(get_db)):
 
 
 @router.get("/")
-def get_users(db: Session = Depends(get_db)):
+def get_users(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    require_admin(current_user)
 
     users = db.query(models.User).all()
 
     return users
 
 
+@router.get("/me", response_model=schemas.UserProfile)
+def get_me(current_user: dict = Depends(get_current_user)):
+    return current_user
+
+
 @router.get("/{id}")
-def get_user(id: int, db: Session = Depends(get_db)):
+def get_user(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if current_user["id"] != id and not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation not permitted"
+        )
 
     user = db.query(models.User).filter(
         models.User.id == id
@@ -74,7 +111,17 @@ def get_user(id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{id}")
-def delete_user(id: int, db: Session = Depends(get_db)):
+def delete_user(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+
+    if current_user["id"] != id and not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation not permitted"
+        )
 
     user = db.query(models.User).filter(
         models.User.id == id
@@ -98,7 +145,8 @@ def delete_user(id: int, db: Session = Depends(get_db)):
 def update_user(
     id: int,
     updated_user: schemas.UserBase,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
 ):
 
     user = db.query(models.User).filter(
@@ -109,6 +157,12 @@ def update_user(
         raise HTTPException(
             status_code=404,
             detail="User not found"
+        )
+
+    if current_user["id"] != id and not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation not permitted"
         )
 
     hashed_password = Hash.bcrypt(updated_user.password)

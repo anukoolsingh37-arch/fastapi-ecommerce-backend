@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopEase Product</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="page-shell store-shell">
+    <header class="topbar">
+      <div class="brand">ShopEase</div>
+      <nav class="nav-links">
+        <a href="/store">Store</a>
+        <a href="/orders">Orders</a>
+        <a href="/docs">API Docs</a>
+      </nav>
+    </header>
+
+    <main class="store-main">
+      <section class="store-hero">
+        <div class="hero-copy">
+          <span class="eyebrow">Product detail</span>
+          <h1 id="product-title">Loading product...</h1>
+          <p id="product-description">Please wait while the product loads.</p>
+          <div class="hero-actions">
+            <button id="back-to-store" class="btn btn-outline">Back to Store</button>
+            <button id="view-orders" class="btn btn-secondary">My Orders</button>
+          </div>
+          <div class="hero-highlights">
+            <div>
+              <strong>Easy checkout</strong>
+              <p>Add to cart and go straight to an order summary.</p>
+            </div>
+            <div>
+              <strong>Login ready</strong>
+              <p>Sign in for cart and wishlist actions with your FastAPI account.</p>
+            </div>
+          </div>
+        </div>
+
+        <aside class="auth-card">
+          <div class="auth-header">
+            <div>
+              <h2>Member access</h2>
+              <p>Log in to manage your shopping experience.</p>
+            </div>
+          </div>
+          <div class="auth-forms">
+            <form id="login-form" class="form-sm">
+              <label>Username</label>
+              <input id="login-username" type="text" placeholder="demo" required />
+              <label>Password</label>
+              <input id="login-password" type="password" placeholder="demopass" required />
+              <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
+            </form>
+            <form id="register-form" class="form-sm">
+              <label>Username</label>
+              <input id="register-username" type="text" placeholder="newuser" required />
+              <label>Email</label>
+              <input id="register-email" type="email" placeholder="you@example.com" required />
+              <label>Password</label>
+              <input id="register-password" type="password" placeholder="password" required />
+              <button type="submit" class="btn btn-outline btn-sm">Sign Up</button>
+            </form>
+          </div>
+          <div id="auth-message" class="auth-message"></div>
+        </aside>
+      </section>
+
+      <section class="shop-section">
+        <div class="product-card" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 24px;">
+          <div class="card-media" style="min-height: 420px;">
+            <img id="product-image" src="" alt="Product image" />
+          </div>
+          <div class="card-body" style="padding: 32px; gap: 22px;">
+            <div class="tag" id="product-category">Featured</div>
+            <h2 id="product-name">Loading...</h2>
+            <p id="product-copy">Checking availability and price.</p>
+            <div class="card-meta">
+              <strong id="product-price">$0.00</strong>
+              <span id="product-stock">Stock available</span>
+            </div>
+            <div class="card-actions" style="display: grid; gap: 14px;">
+              <button id="product-add-cart" class="btn btn-primary btn-full">Add to Cart</button>
+              <button id="product-add-wishlist" class="btn btn-outline btn-full">Save to Wishlist</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="shop-section">
+        <div class="section-heading">
+          <div>
+            <h2>Product Reviews</h2>
+            <p>See what other customers are saying.</p>
+          </div>
+        </div>
+        <div id="review-list" class="panel-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const authMessage = document.getElementById('auth-message');
+    const productTitle = document.getElementById('product-title');
+    const productName = document.getElementById('product-name');
+    const productDescription = document.getElementById('product-description');
+    const productPrice = document.getElementById('product-price');
+    const productStock = document.getElementById('product-stock');
+    const productCategory = document.getElementById('product-category');
+    const productImage = document.getElementById('product-image');
+    const reviewList = document.getElementById('review-list');
+    const addCartButton = document.getElementById('product-add-cart');
+    const addWishlistButton = document.getElementById('product-add-wishlist');
+    const backButton = document.getElementById('back-to-store');
+    const ordersButton = document.getElementById('view-orders');
+
+    let currentProduct = null;
+
+    async function loadProduct() {
+      const productId = getQueryParameter('id');
+      if (!productId) {
+        productTitle.textContent = 'Product not found';
+        productDescription.textContent = 'No product selected. Please open this page with ?id=<product_id>.';
+        return;
+      }
+      try {
+        const product = await apiFetch(`/products/${productId}`);
+        currentProduct = product;
+        productTitle.textContent = product.title;
+        productName.textContent = product.title;
+        productDescription.textContent = product.description || 'Great product from ShopEase.';
+        productPrice.textContent = `$${product.price.toFixed(2)}`;
+        productStock.textContent = `${product.stock} in stock`;
+        productCategory.textContent = product.featured ? 'Featured' : 'ShopEase';
+        productImage.src = product.image || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80';
+        loadReviews(product.id);
+      } catch (error) {
+        productTitle.textContent = 'Unable to load product';
+        productDescription.textContent = error.detail || 'The product may not exist yet.';
+      }
+    }
+
+    async function loadReviews(productId) {
+      try {
+        const reviews = await apiFetch(`/reviews/product/${productId}`);
+        reviewList.innerHTML = '';
+        if (!reviews.length) {
+          reviewList.appendChild(createReviewCard('No reviews yet', 'Be the first to add a review.'));
+          return;
+        }
+        reviews.forEach(review => {
+          reviewList.appendChild(createReviewCard(`${review.user} • ${review.rating}★`, review.comment));
+        });
+      } catch (error) {
+        reviewList.innerHTML = '';
+        reviewList.appendChild(createReviewCard('Unable to load reviews', error.detail || 'Try again later.'));
+      }
+    }
+
+    function createReviewCard(title, subtitle) {
+      const card = document.createElement('div');
+      card.className = 'panel-card';
+      card.innerHTML = `<strong>${title}</strong><span>${subtitle}</span>`;
+      return card;
+    }
+
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      try {
+        const result = await loginUser(username, password);
+        authMessage.textContent = `Welcome back, ${result.user.username}`;
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Login failed';
+      }
+    });
+
+    registerForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+      try {
+        const result = await registerUser(username, email, password);
+        authMessage.textContent = result.message || 'Account created successfully.';
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Registration failed';
+      }
+    });
+
+    addCartButton.addEventListener('click', async () => {
+      if (!currentProduct) return;
+      try {
+        const result = await apiFetch('/cart/', {
+          method: 'POST',
+          body: { product_id: Number(currentProduct.id), quantity: 1 }
+        });
+        authMessage.textContent = result.message || 'Added to cart';
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to add to cart';
+      }
+    });
+
+    addWishlistButton.addEventListener('click', async () => {
+      if (!currentProduct) return;
+      try {
+        const result = await apiFetch('/wishlist/', {
+          method: 'POST',
+          body: { product_id: Number(currentProduct.id) }
+        });
+        authMessage.textContent = result.message || 'Saved to wishlist';
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to save to wishlist';
+      }
+    });
+
+    backButton.addEventListener('click', () => window.location.href = '/store');
+    ordersButton.addEventListener('click', () => window.location.href = '/orders');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      ensureAuthMessage();
+      loadProduct();
+    });
+  </script>
+</body>
+</html>

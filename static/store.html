@@ -14,6 +14,7 @@
         <a href="#shop">Shop</a>
         <a href="#cart">Cart</a>
         <a href="#wishlist">Wishlist</a>
+        <a href="/orders">Orders</a>
         <a href="/docs">API Docs</a>
       </nav>
     </header>
@@ -161,6 +162,7 @@
     </div>
   </div>
 
+  <script src="/static/shared.js"></script>
   <script>
     const authMessage = document.getElementById('auth-message');
     const productsContainer = document.getElementById('products');
@@ -182,19 +184,23 @@
 
     let selectedProduct = null;
     let activeCategory = 'All';
-    const state = {
-      token: null,
-      user: null,
-    };
+    let categoryMap = {};
+    let categoryLookup = {};
 
     async function apiFetch(path, options = {}) {
       const headers = options.headers || {};
-      headers['Content-Type'] = 'application/json';
+      if (!options.headers) {
+        headers['Content-Type'] = 'application/json';
+      }
       if (state.token) {
         headers['Authorization'] = `Bearer ${state.token}`;
       }
       const response = await fetch(path, { ...options, headers });
-      return response.json();
+      const body = await response.json();
+      if (!response.ok) {
+        throw body;
+      }
+      return body;
     }
 
     async function registerUser(event) {
@@ -203,12 +209,15 @@
       const email = document.getElementById('register-email').value.trim();
       const password = document.getElementById('register-password').value;
 
-      const result = await apiFetch('/users/', {
-        method: 'POST',
-        body: JSON.stringify({ username, email, password })
-      });
-
-      authMessage.textContent = result.message || result.detail || 'Registration completed.';
+      try {
+        const result = await apiFetch('/users/', {
+          method: 'POST',
+          body: { username, email, password }
+        });
+        authMessage.textContent = result.message || 'Registration completed.';
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Registration failed.';
+      }
     }
 
     async function loginUser(event) {
@@ -225,7 +234,7 @@
       });
       const result = await response.json();
 
-      if (result.access_token) {
+      if (response.ok && result.access_token) {
         state.token = result.access_token;
         state.user = result.user;
         authMessage.textContent = `Logged in as ${result.user.username}`;
@@ -234,8 +243,11 @@
       }
     }
 
-    function deriveCategory(title) {
-      const normalized = title.toLowerCase();
+    function deriveCategory(product) {
+      if (product.category_id && categoryLookup[product.category_id]) {
+        return categoryLookup[product.category_id];
+      }
+      const normalized = product.title.toLowerCase();
       if (normalized.includes('shoe') || normalized.includes('fashion') || normalized.includes('shirt') || normalized.includes('jeans')) return 'Fashion';
       if (normalized.includes('phone') || normalized.includes('laptop') || normalized.includes('camera') || normalized.includes('smart')) return 'Electronics';
       if (normalized.includes('lamp') || normalized.includes('sofa') || normalized.includes('mug') || normalized.includes('desk')) return 'Home';
@@ -265,7 +277,7 @@
       products.forEach(product => {
         const card = document.createElement('article');
         card.className = 'product-card';
-        const category = deriveCategory(product.title);
+        const category = deriveCategory(product);
         card.innerHTML = `
           <div class="card-media">
             <img src="${getImageUrl(product)}" alt="${product.title}" />
@@ -279,13 +291,28 @@
               <small>${product.stock} in stock</small>
             </div>
             <div class="card-actions">
-              <button data-name="${product.title}" data-price="${product.price}" data-image="${getImageUrl(product)}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-stock="${product.stock}" class="btn btn-primary btn-full add-cart">Add to Cart</button>
-              <button data-name="${product.title}" data-price="${product.price}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-image="${getImageUrl(product)}" data-stock="${product.stock}" class="btn btn-outline btn-full view-details">Details</button>
+              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" class="btn btn-primary btn-full add-cart">Add to Cart</button>
+              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-image="${getImageUrl(product)}" data-stock="${product.stock}" class="btn btn-outline btn-full view-details">Details</button>
+              <a href="/product?id=${product.id}" class="btn btn-secondary btn-full">Open Product Page</a>
             </div>
           </div>
         `;
         productsContainer.appendChild(card);
       });
+    }
+
+    async function loadCategories() {
+      try {
+        const categories = await apiFetch('/categories');
+        categoryMap = {};
+        categoryLookup = {};
+        categories.forEach(cat => {
+          categoryMap[cat.name] = cat.id;
+          categoryLookup[cat.id] = cat.name;
+        });
+      } catch (error) {
+        console.warn('Could not load categories', error);
+      }
     }
 
     async function loadProducts() {
@@ -294,79 +321,97 @@
       const maxPrice = parseFloat(maxPriceInput.value);
 
       const params = new URLSearchParams();
-      if (name) params.set('name', name);
+      if (name) params.set('search', name);
       if (!Number.isNaN(minPrice)) params.set('min_price', minPrice);
       if (!Number.isNaN(maxPrice)) params.set('max_price', maxPrice);
+      if (activeCategory !== 'All' && categoryMap[activeCategory]) {
+        params.set('category_id', categoryMap[activeCategory]);
+      }
 
       const path = `/products/search?${params.toString()}`;
       const products = await apiFetch(path);
-      const filtered = products.filter(product => {
-        if (activeCategory === 'All') return true;
-        return deriveCategory(product.title) === activeCategory;
-      });
-      renderProducts(filtered);
+      renderProducts(products);
     }
 
-    async function addToCart(productName, price) {
+    async function addToCart(productId) {
       if (!state.token) {
         authMessage.textContent = 'Login first to use the cart.';
         return;
       }
-      const result = await apiFetch('/cart/', {
-        method: 'POST',
-        body: JSON.stringify({ product_name: productName, quantity: 1, price })
-      });
-      authMessage.textContent = result.message || JSON.stringify(result);
-      loadCart();
+      try {
+        const result = await apiFetch('/cart/', {
+          method: 'POST',
+          body: { product_id: Number(productId), quantity: 1 }
+        });
+        authMessage.textContent = result.message || 'Added product to cart.';
+        loadCart();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to add item to cart.';
+      }
     }
 
-    async function addToWishlist(productName) {
+    async function addToWishlist(productId) {
       if (!state.token) {
         authMessage.textContent = 'Login first to use the wishlist.';
         return;
       }
-      const result = await apiFetch('/wishlist/', {
-        method: 'POST',
-        body: JSON.stringify({ product_name: productName })
-      });
-      authMessage.textContent = result.message || JSON.stringify(result);
-      loadWishlist();
+      try {
+        const result = await apiFetch('/wishlist/', {
+          method: 'POST',
+          body: { product_id: Number(productId) }
+        });
+        authMessage.textContent = result.message || 'Added to wishlist.';
+        loadWishlist();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to add wishlist item.';
+      }
     }
 
     async function loadCart() {
       if (!state.token) {
         authMessage.textContent = 'Login first to view your cart.';
-        return;
-      }
-      const result = await apiFetch('/cart/');
-      cartContainer.innerHTML = '';
-      if (!result.length) {
+        cartContainer.innerHTML = '';
         cartSummary.textContent = '0 items · $0.00';
-        cartContainer.appendChild(createPanelItem('Your cart is empty', 'Add products to start shopping.'));
         return;
       }
-      const total = result.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
-      const quantity = result.reduce((sum, item) => sum + item.quantity, 0);
-      cartSummary.textContent = `${quantity} item(s) · $${total.toFixed(2)}`;
-      result.forEach(item => {
-        cartContainer.appendChild(createPanelItem(item.product_name, `Qty ${item.quantity} · $${item.price.toFixed(2)}`));
-      });
+      try {
+        const result = await apiFetch('/cart/');
+        cartContainer.innerHTML = '';
+        if (!result.length) {
+          cartSummary.textContent = '0 items · $0.00';
+          cartContainer.appendChild(createPanelItem('Your cart is empty', 'Add products to start shopping.'));
+          return;
+        }
+        const total = result.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+        const quantity = result.reduce((sum, item) => sum + item.quantity, 0);
+        cartSummary.textContent = `${quantity} item(s) · $${total.toFixed(2)}`;
+        result.forEach(item => {
+          cartContainer.appendChild(createPanelItem(item.product_name, `Qty ${item.quantity} · $${item.price.toFixed(2)}`));
+        });
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to load cart.';
+      }
     }
 
     async function loadWishlist() {
       if (!state.token) {
         authMessage.textContent = 'Login first to view your wishlist.';
+        wishlistContainer.innerHTML = '';
         return;
       }
-      const result = await apiFetch('/wishlist/');
-      wishlistContainer.innerHTML = '';
-      if (!result.length) {
-        wishlistContainer.appendChild(createPanelItem('Wishlist is empty', 'Save your favorite products here.'));
-        return;
+      try {
+        const result = await apiFetch('/wishlist/');
+        wishlistContainer.innerHTML = '';
+        if (!result.length) {
+          wishlistContainer.appendChild(createPanelItem('Wishlist is empty', 'Save your favorite products here.'));
+          return;
+        }
+        result.forEach(item => {
+          wishlistContainer.appendChild(createPanelItem(item.product_name, `Saved for ${item.user}`));
+        });
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to load wishlist.';
       }
-      result.forEach(item => {
-        wishlistContainer.appendChild(createPanelItem(item.product_name, item.user || 'Saved item'));
-      });
     }
 
     function openModal(product) {
@@ -410,20 +455,40 @@
 
     productsContainer.addEventListener('click', event => {
       if (event.target.matches('.add-cart')) {
-        const { name, price } = event.target.dataset;
-        addToCart(name, parseFloat(price));
+        addToCart(event.target.dataset.id);
       }
       if (event.target.matches('.view-details')) {
-        const title = event.target.dataset.name;
-        const price = parseFloat(event.target.dataset.price);
-        const description = event.target.dataset.description;
-        const image = event.target.dataset.image;
-        const stock = parseInt(event.target.dataset.stock, 10) || 0;
-        openModal({ title, price, description, image, stock });
+        const product = {
+          id: event.target.dataset.id,
+          title: event.target.dataset.name,
+          price: parseFloat(event.target.dataset.price),
+          description: event.target.dataset.description,
+          image: event.target.dataset.image,
+          stock: parseInt(event.target.dataset.stock, 10) || 0
+        };
+        openModal(product);
       }
     });
 
-    window.addEventListener('DOMContentLoaded', () => {
+    modalAddCart.addEventListener('click', () => {
+      if (selectedProduct) {
+        addToCart(selectedProduct.id);
+      }
+    });
+
+    modalAddWishlist.addEventListener('click', () => {
+      if (selectedProduct) {
+        addToWishlist(selectedProduct.id);
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      ensureAuthMessage();
+      try {
+        await loadCategories();
+      } catch (e) {
+        console.warn('Categories load failed', e);
+      }
       loadProducts();
       loadCart();
       loadWishlist();

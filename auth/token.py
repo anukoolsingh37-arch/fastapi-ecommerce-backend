@@ -1,22 +1,4 @@
-from jose import jwt
-from datetime import datetime, timedelta
+from auth.jwt_handler import create_access_token
 
-SECRET_KEY = "mysecretkey"
+__all__ = ["create_access_token"]
 
-ALGORITHM = "HS256"
-
-def create_access_token(data: dict):
-
-    to_encode = data.copy()
-
-    expire = datetime.utcnow() + timedelta(minutes=30)
-
-    to_encode.update({"exp": expire})
-
-    encoded_jwt = jwt.encode(
-        to_encode,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
-
-    return encoded_jwt
