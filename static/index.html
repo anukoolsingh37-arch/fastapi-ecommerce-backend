@@ -9,12 +9,20 @@
 <body>
   <div class="page-shell landing-shell">
     <header class="topbar">
-      <div class="brand">ShopEase</div>
+      <div style="display:flex;align-items:center;gap:18px;">
+        <div class="brand">ShopEase</div>
+        <div class="search-wrap">
+          <input id="site-search" type="search" placeholder="Search products, categories, prices..." />
+        </div>
+      </div>
+
       <nav class="nav-links">
         <a href="/store">Store</a>
         <a href="/orders">Orders</a>
+        <a href="/admin">Admin</a>
         <a href="/docs">API Docs</a>
         <a href="#features">Features</a>
+        <button id="cart-button" class="btn btn-sm" aria-label="Open cart">Cart <span id="cart-count" class="cart-badge">0</span></button>
       </nav>
     </header>
 
@@ -66,6 +74,86 @@
           </div>
         </aside>
       </section>
+
+      <section class="shop-section">
+        <div class="section-heading">
+          <h2>Featured products</h2>
+          <div style="display:flex;gap:12px;align-items:center;">
+            <select id="sort-select" class="pill">
+              <option value="default">Sort</option>
+              <option value="price_asc">Price: Low → High</option>
+              <option value="price_desc">Price: High → Low</option>
+              <option value="name_asc">Name: A → Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="filter-panel">
+          <div class="filter-group">
+            <label>Category</label>
+            <div id="category-pills" class="pill-group"></div>
+          </div>
+          <div class="filter-group inline-group">
+            <div>
+              <label>Min price</label>
+              <input id="min-price" type="number" placeholder="0" />
+            </div>
+            <div>
+              <label>Max price</label>
+              <input id="max-price" type="number" placeholder="9999" />
+            </div>
+          </div>
+          <div class="filter-group">
+            <label>&nbsp;</label>
+            <div style="display:flex;gap:8px;">
+              <button id="apply-filters" class="btn btn-sm">Apply</button>
+              <button id="clear-filters" class="btn btn-sm btn-outline">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="product-grid" class="product-grid"></div>
+      </section>
+
+      <div id="auth-modal" class="modal hidden" aria-hidden="true">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <button class="modal-close">×</button>
+          <div style="display:grid;grid-template-columns:1fr;gap:18px;padding:28px;min-width:320px;">
+            <div class="auth-card">
+              <div class="auth-header">
+                <h2 id="auth-title">Sign in</h2>
+                <p id="auth-message">Login to access cart, wishlist, and orders.</p>
+              </div>
+              <div id="auth-forms" class="auth-forms">
+                <div id="login-form" class="form-sm">
+                  <label>Username or email</label>
+                  <input id="login-username" />
+                  <label>Password</label>
+                  <input id="login-password" type="password" />
+                  <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button id="show-register" class="btn btn-outline">Register</button>
+                    <button id="login-submit" class="btn btn-primary">Sign in</button>
+                  </div>
+                </div>
+
+                <div id="register-form" class="form-sm" style="display:none;">
+                  <label>Username</label>
+                  <input id="reg-username" />
+                  <label>Email</label>
+                  <input id="reg-email" />
+                  <label>Password</label>
+                  <input id="reg-password" type="password" />
+                  <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button id="show-login" class="btn btn-outline">Back</button>
+                    <button id="register-submit" class="btn btn-primary">Create account</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <section id="features" class="feature-row">
         <article>

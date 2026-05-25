@@ -97,6 +97,19 @@
           </div>
         </div>
         <div id="review-list" class="panel-list"></div>
+        <div class="review-form panel-card" style="margin-top:20px;">
+          <label for="review-rating"><strong>Leave a review</strong></label>
+          <select id="review-rating" class="input-field" style="margin:10px 0;">
+            <option value="5">5 stars</option>
+            <option value="4">4 stars</option>
+            <option value="3">3 stars</option>
+            <option value="2">2 stars</option>
+            <option value="1">1 star</option>
+          </select>
+          <textarea id="review-comment" rows="4" class="input-field" placeholder="Tell us what you liked or what can improve."></textarea>
+          <button id="submit-review" class="btn btn-primary btn-full" style="margin-top:12px;">Submit Review</button>
+          <div id="review-feedback" class="auth-message" style="margin-top:10px;">Login to leave a review.</div>
+        </div>
       </section>
     </main>
   </div>
@@ -114,6 +127,10 @@
     const productCategory = document.getElementById('product-category');
     const productImage = document.getElementById('product-image');
     const reviewList = document.getElementById('review-list');
+    const reviewRating = document.getElementById('review-rating');
+    const reviewComment = document.getElementById('review-comment');
+    const reviewSubmit = document.getElementById('submit-review');
+    const reviewFeedback = document.getElementById('review-feedback');
     const addCartButton = document.getElementById('product-add-cart');
     const addWishlistButton = document.getElementById('product-add-wishlist');
     const backButton = document.getElementById('back-to-store');
@@ -217,6 +234,36 @@
         authMessage.textContent = result.message || 'Saved to wishlist';
       } catch (error) {
         authMessage.textContent = error.detail || 'Unable to save to wishlist';
+      }
+    });
+
+    reviewSubmit.addEventListener('click', async () => {
+      if (!state.token) {
+        reviewFeedback.textContent = 'Login to submit a review.';
+        return;
+      }
+      if (!currentProduct) return;
+      const rating = Number(reviewRating.value);
+      const comment = reviewComment.value.trim();
+      if (!comment) {
+        reviewFeedback.textContent = 'Please add a comment to submit your review.';
+        return;
+      }
+      try {
+        const result = await apiFetch('/reviews/', {
+          method: 'POST',
+          body: {
+            product_id: Number(currentProduct.id),
+            rating,
+            comment
+          }
+        });
+        reviewFeedback.textContent = 'Review submitted — thanks!';
+        reviewComment.value = '';
+        reviewRating.value = '5';
+        loadReviews(currentProduct.id);
+      } catch (error) {
+        reviewFeedback.textContent = error.detail || 'Unable to submit review.';
       }
     });
 

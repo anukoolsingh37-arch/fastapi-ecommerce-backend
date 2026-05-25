@@ -154,6 +154,21 @@ def get_sales_summary(
     }
 
 
+@router.get("/admin/orders")
+def get_admin_orders(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
+
+    orders = db.query(models.Order).order_by(models.Order.created_at.desc()).all()
+    return orders
+
+
 @router.get("/{order_id}")
 def get_order(
     order_id: int,

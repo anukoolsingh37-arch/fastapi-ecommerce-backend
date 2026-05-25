@@ -15,6 +15,7 @@
         <a href="#cart">Cart</a>
         <a href="#wishlist">Wishlist</a>
         <a href="/orders">Orders</a>
+        <a href="/admin">Admin</a>
         <a href="/docs">API Docs</a>
       </nav>
     </header>
@@ -121,7 +122,13 @@
             <button id="load-cart" class="btn btn-secondary btn-sm">Refresh</button>
           </div>
           <div id="cart-summary" class="panel-summary"></div>
+          <div class="coupon-row" style="margin-bottom:16px; display:grid;grid-template-columns:1fr auto;gap:8px;">
+            <input id="coupon-code" type="text" placeholder="Coupon code" />
+            <button id="apply-coupon" class="btn btn-primary btn-sm">Apply</button>
+          </div>
+          <div id="coupon-feedback" class="auth-message" style="margin-bottom:12px;">Enter a coupon code and hit Apply.</div>
           <div id="cart-items" class="panel-list"></div>
+          <button id="checkout-cart" class="btn btn-primary btn-full" style="margin-top:18px;">Checkout</button>
         </div>
         <div class="panel-sm" id="wishlist">
           <div class="panel-header">
@@ -169,6 +176,10 @@
     const cartContainer = document.getElementById('cart-items');
     const wishlistContainer = document.getElementById('wishlist-items');
     const cartSummary = document.getElementById('cart-summary');
+    const couponInput = document.getElementById('coupon-code');
+    const couponFeedback = document.getElementById('coupon-feedback');
+    const applyCouponButton = document.getElementById('apply-coupon');
+    const checkoutButton = document.getElementById('checkout-cart');
     const categoryButtons = document.querySelectorAll('#category-filter .pill');
     const searchInput = document.getElementById('search-input');
     const minPriceInput = document.getElementById('min-price');
@@ -186,6 +197,7 @@
     let activeCategory = 'All';
     let categoryMap = {};
     let categoryLookup = {};
+    let currentCoupon = '';
 
     async function apiFetch(path, options = {}) {
       const headers = options.headers || {};
@@ -367,26 +379,75 @@
       }
     }
 
+    async function removeCartItem(cartId) {
+      try {
+        await apiFetch(`/cart/${cartId}`, { method: 'DELETE' });
+        authMessage.textContent = 'Item removed from cart.';
+        await loadCart();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to remove item.';
+      }
+    }
+
+    async function checkoutCart() {
+      if (!state.token) {
+        authMessage.textContent = 'Login first to checkout.';
+        return;
+      }
+      try {
+        const result = await apiFetch('/cart/checkout', {
+          method: 'POST',
+          body: { coupon_code: couponInput.value.trim() || null }
+        });
+        authMessage.textContent = result.message ? `${result.message} Total: $${Number(result.total_price).toFixed(2)}` : 'Checkout complete.';
+        couponFeedback.textContent = result.discount_amount ? `Discount applied: $${Number(result.discount_amount).toFixed(2)}` : 'No discount applied.';
+        couponInput.value = '';
+        currentCoupon = '';
+        await loadCart();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Checkout failed.';
+      }
+    }
+
     async function loadCart() {
       if (!state.token) {
         authMessage.textContent = 'Login first to view your cart.';
         cartContainer.innerHTML = '';
         cartSummary.textContent = '0 items · $0.00';
+        checkoutButton.disabled = true;
+        applyCouponButton.disabled = true;
         return;
       }
       try {
         const result = await apiFetch('/cart/');
         cartContainer.innerHTML = '';
+        currentCoupon = couponInput.value.trim();
+        couponFeedback.textContent = currentCoupon ? `Coupon '${currentCoupon}' ready to apply.` : 'Enter a coupon code and hit Apply.';
         if (!result.length) {
           cartSummary.textContent = '0 items · $0.00';
           cartContainer.appendChild(createPanelItem('Your cart is empty', 'Add products to start shopping.'));
+          checkoutButton.disabled = true;
+          applyCouponButton.disabled = false;
           return;
         }
         const total = result.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
         const quantity = result.reduce((sum, item) => sum + item.quantity, 0);
         cartSummary.textContent = `${quantity} item(s) · $${total.toFixed(2)}`;
+        checkoutButton.disabled = false;
+        applyCouponButton.disabled = false;
         result.forEach(item => {
-          cartContainer.appendChild(createPanelItem(item.product_name, `Qty ${item.quantity} · $${item.price.toFixed(2)}`));
+          const card = document.createElement('div');
+          card.className = 'panel-card';
+          card.innerHTML = `
+            <div>
+              <strong>${item.product_name}</strong>
+              <span>${item.quantity} × $${item.price.toFixed(2)}</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-sm btn-outline remove-cart" data-cart-id="${item.id}">Remove</button>
+            </div>
+          `;
+          cartContainer.appendChild(card);
         });
       } catch (error) {
         authMessage.textContent = error.detail || 'Unable to load cart.';
@@ -407,10 +468,46 @@
           return;
         }
         result.forEach(item => {
-          wishlistContainer.appendChild(createPanelItem(item.product_name, `Saved for ${item.user}`));
+          const card = document.createElement('div');
+          card.className = 'panel-card';
+          card.innerHTML = `
+            <div>
+              <strong>${item.product_name}</strong>
+              <span>Saved to wishlist</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;">
+              <button class="btn btn-sm btn-primary move-to-cart" data-id="${item.id}">Move to Cart</button>
+              <button class="btn btn-sm btn-outline remove-wishlist" data-id="${item.id}">Remove</button>
+            </div>
+          `;
+          wishlistContainer.appendChild(card);
         });
       } catch (error) {
         authMessage.textContent = error.detail || 'Unable to load wishlist.';
+      }
+    }
+
+    async function moveWishlistItem(wishlistId) {
+      try {
+        const result = await apiFetch(`/wishlist/${wishlistId}/move-to-cart`, {
+          method: 'POST',
+          body: { quantity: 1 }
+        });
+        authMessage.textContent = result.message || 'Moved wishlist item to cart.';
+        await loadCart();
+        await loadWishlist();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to move wishlist item.';
+      }
+    }
+
+    async function removeWishlistItem(wishlistId) {
+      try {
+        const result = await apiFetch(`/wishlist/${wishlistId}`, { method: 'DELETE' });
+        authMessage.textContent = result.message || 'Removed from wishlist.';
+        await loadWishlist();
+      } catch (error) {
+        authMessage.textContent = error.detail || 'Unable to remove wishlist item.';
       }
     }
 
@@ -469,6 +566,29 @@
         openModal(product);
       }
     });
+
+    cartContainer.addEventListener('click', event => {
+      if (event.target.matches('.remove-cart')) {
+        removeCartItem(event.target.dataset.cartId);
+      }
+    });
+
+    wishlistContainer.addEventListener('click', event => {
+      if (event.target.matches('.move-to-cart')) {
+        moveWishlistItem(event.target.dataset.id);
+      }
+      if (event.target.matches('.remove-wishlist')) {
+        removeWishlistItem(event.target.dataset.id);
+      }
+    });
+
+    applyCouponButton.addEventListener('click', () => {
+      currentCoupon = couponInput.value.trim();
+      couponFeedback.textContent = currentCoupon ? `Coupon '${currentCoupon}' ready to apply.` : 'Enter a coupon code and hit Apply.';
+      loadCart();
+    });
+
+    checkoutButton.addEventListener('click', checkoutCart);
 
     modalAddCart.addEventListener('click', () => {
       if (selectedProduct) {

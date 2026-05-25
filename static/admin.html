@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ShopEase Admin Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="page-shell admin-shell">
+    <header class="topbar">
+      <div class="brand">ShopEase Admin</div>
+      <nav class="nav-links">
+        <a href="/store">Store</a>
+        <a href="/orders">Orders</a>
+        <a href="/docs">API Docs</a>
+        <button id="open-login" class="btn btn-sm btn-outline">Admin Sign In</button>
+      </nav>
+    </header>
+
+    <main class="store-main">
+      <section class="feature-row" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 32px;">
+        <article>
+          <h3>Total orders</h3>
+          <p id="stat-orders">-</p>
+        </article>
+        <article>
+          <h3>Total revenue</h3>
+          <p id="stat-revenue">-</p>
+        </article>
+        <article>
+          <h3>Current user</h3>
+          <p id="stat-user">Not signed in</p>
+        </article>
+      </section>
+
+      <section class="shop-section">
+        <div class="section-heading">
+          <div>
+            <h2>Sales summary</h2>
+            <p>Top selling products and admin actions.</p>
+          </div>
+          <button id="refresh-dashboard" class="btn btn-outline btn-sm">Refresh</button>
+        </div>
+
+        <div class="panel-sm" style="padding:24px;">
+          <h3>Best sellers</h3>
+          <div id="best-sellers" class="panel-list"></div>
+        </div>
+      </section>
+
+      <section class="shop-section">
+        <div class="section-heading">
+          <div>
+            <h2>Product management</h2>
+            <p>Edit stock levels and featured status in real time.</p>
+          </div>
+        </div>
+        <div id="product-admin-table" class="admin-table"></div>
+      </section>
+
+      <section class="shop-section">
+        <div class="section-heading">
+          <div>
+            <h2>Order management</h2>
+            <p>View and update order statuses.</p>
+          </div>
+        </div>
+        <div id="order-admin-table" class="admin-table"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="auth-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close">×</button>
+      <div style="display:grid;grid-template-columns:1fr;gap:18px;padding:28px;min-width:320px;">
+        <div class="auth-card">
+          <div class="auth-header">
+            <h2 id="auth-title">Sign in</h2>
+            <p id="auth-message">Login with admin credentials to view this dashboard.</p>
+          </div>
+          <div id="auth-forms" class="auth-forms">
+            <div id="login-form" class="form-sm">
+              <label>Username or email</label>
+              <input id="login-username" />
+              <label>Password</label>
+              <input id="login-password" type="password" />
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button id="login-submit" class="btn btn-primary">Sign in</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script src="/static/admin.js"></script>
+</body>
+</html>
