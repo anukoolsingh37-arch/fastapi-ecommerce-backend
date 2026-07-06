@@ -190,11 +190,17 @@
       event.preventDefault();
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
+      if (!username || !password) {
+        authMessage.textContent = 'Please enter username and password.';
+        return;
+      }
       try {
         const result = await loginUser(username, password);
-        authMessage.textContent = `Welcome back, ${result.user.username}`;
+        authMessage.textContent = `Welcome back, ${result.user.username}!`;
+        showToast('Signed in successfully', 'success');
       } catch (error) {
-        authMessage.textContent = error.detail || 'Login failed';
+        authMessage.textContent = error.message || 'Login failed';
+        showToast('Login failed', 'error');
       }
     });
 
@@ -203,11 +209,20 @@
       const username = document.getElementById('register-username').value.trim();
       const email = document.getElementById('register-email').value.trim();
       const password = document.getElementById('register-password').value;
+      if (!username || !email || !password) {
+        authMessage.textContent = 'Please fill in all fields.';
+        return;
+      }
       try {
         const result = await registerUser(username, email, password);
-        authMessage.textContent = result.message || 'Account created successfully.';
+        authMessage.textContent = result.message || 'Account created! You can now sign in.';
+        showToast('Registration successful!', 'success');
+        document.getElementById('register-username').value = '';
+        document.getElementById('register-email').value = '';
+        document.getElementById('register-password').value = '';
       } catch (error) {
-        authMessage.textContent = error.detail || 'Registration failed';
+        authMessage.textContent = error.body?.detail || error.message || 'Registration failed';
+        showToast('Registration failed', 'error');
       }
     });
 

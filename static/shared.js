@@ -1,3 +1,4 @@
+// ===== Auth State =====
 const AUTH_TOKEN_KEY = 'shop_ease_token';
 const AUTH_USER_KEY = 'shop_ease_user';
 
@@ -28,9 +29,74 @@ function getAuthHeaders() {
   return headers;
 }
 
+// ===== Toast Notification System =====
+function ensureToastContainer() {
+  let container = document.getElementById('toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+  return container;
+}
+
+function showToast(message, type = 'info', duration = 4000) {
+  const container = ensureToastContainer();
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.textContent = message;
+  toast.addEventListener('click', () => {
+    toast.classList.add('toast-removing');
+    setTimeout(() => toast.remove(), 300);
+  });
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.classList.add('toast-removing');
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// ===== Loading Spinner =====
+function createSpinner(large = false) {
+  const div = document.createElement('div');
+  div.className = large ? 'spinner spinner-lg' : 'spinner';
+  return div;
+}
+
+function showLoading(container, message = 'Loading...') {
+  container.innerHTML = '';
+  const overlay = document.createElement('div');
+  overlay.className = 'loading-overlay';
+  overlay.id = 'loading-indicator';
+  overlay.appendChild(createSpinner(true));
+  const text = document.createElement('span');
+  text.textContent = message;
+  overlay.appendChild(text);
+  container.appendChild(overlay);
+}
+
+// ===== Mobile Menu Toggle =====
+function initMobileMenu() {
+  const toggle = document.getElementById('mobile-menu-toggle');
+  const nav = document.querySelector('.nav-links');
+  if (toggle && nav) {
+    toggle.addEventListener('click', () => {
+      nav.classList.toggle('open');
+    });
+    // Close menu when clicking a link
+    nav.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('click', () => {
+        nav.classList.remove('open');
+      });
+    });
+  }
+}
+
+// ===== Consolidated API Fetch =====
 async function apiFetch(path, options = {}) {
   const fetchOptions = { headers: getAuthHeaders(), ...options };
-  if (options.body && !(options.body instanceof FormData)) {
+  if (options.body && !(options.body instanceof FormData) && !(options.body instanceof URLSearchParams)) {
     fetchOptions.body = JSON.stringify(options.body);
   }
   const response = await fetch(path, fetchOptions);
@@ -41,7 +107,10 @@ async function apiFetch(path, options = {}) {
     body = { detail: 'Invalid response from server' };
   }
   if (!response.ok) {
-    throw body;
+    const error = new Error(body.detail || 'API request failed');
+    error.status = response.status;
+    error.body = body;
+    throw error;
   }
   return body;
 }
@@ -58,7 +127,7 @@ async function loginUser(username, password) {
 
   if (!response.ok) {
     const error = await response.json();
-    throw error;
+    throw new Error(error.detail || 'Login failed');
   }
 
   const result = await response.json();
@@ -100,18 +169,22 @@ function ensureAuthMessage() {
 function logoutUser() {
   clearAuth();
   ensureAuthMessage();
+  showToast('Logged out successfully', 'info');
   window.location.reload();
 }
 
-// Auth modal UI
+// ===== Auth Modal UI =====
 function openAuthModal(mode = 'login') {
   const modal = document.getElementById('auth-modal');
   if (!modal) return;
   modal.classList.remove('hidden');
   modal.setAttribute('aria-hidden', 'false');
-  document.getElementById('auth-title').textContent = mode === 'login' ? 'Sign in' : 'Create account';
-  document.getElementById('login-form').style.display = mode === 'login' ? 'block' : 'none';
-  document.getElementById('register-form').style.display = mode === 'register' ? 'block' : 'none';
+  const title = document.getElementById('auth-title');
+  if (title) title.textContent = mode === 'login' ? 'Sign in' : 'Create account';
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  if (loginForm) loginForm.style.display = mode === 'login' ? 'block' : 'none';
+  if (registerForm) registerForm.style.display = mode === 'register' ? 'block' : 'none';
 }
 
 function closeAuthModal() {
@@ -122,32 +195,40 @@ function closeAuthModal() {
 }
 
 async function handleLogin() {
-  const username = document.getElementById('login-username').value;
-  const password = document.getElementById('login-password').value;
+  const username = document.getElementById('login-username')?.value;
+  const password = document.getElementById('login-password')?.value;
+  if (!username || !password) {
+    showToast('Please enter username and password', 'warning');
+    return;
+  }
   try {
-    const res = await loginUser(username, password);
+    await loginUser(username, password);
     ensureAuthMessage();
     closeAuthModal();
-    alert('Signed in');
+    showToast('Signed in successfully', 'success');
   } catch (err) {
-    alert(err.detail || JSON.stringify(err));
+    showToast(err.message || 'Login failed', 'error');
   }
 }
 
 async function handleRegister() {
-  const username = document.getElementById('reg-username').value;
-  const email = document.getElementById('reg-email').value;
-  const password = document.getElementById('reg-password').value;
+  const username = document.getElementById('reg-username')?.value;
+  const email = document.getElementById('reg-email')?.value;
+  const password = document.getElementById('reg-password')?.value;
+  if (!username || !email || !password) {
+    showToast('Please fill in all fields', 'warning');
+    return;
+  }
   try {
-    const res = await registerUser(username, email, password);
-    alert('Registration successful — you may sign in now');
+    await registerUser(username, email, password);
+    showToast('Registration successful — you may sign in now', 'success');
     openAuthModal('login');
   } catch (err) {
-    alert(err.detail || JSON.stringify(err));
+    showToast(err.body?.detail || err.message || 'Registration failed', 'error');
   }
 }
 
-// --- Client storefront helpers: products, search, filters, cart ---
+// ===== Client-side Cart Helpers =====
 state.cart = JSON.parse(localStorage.getItem('shop_ease_cart') || '[]');
 
 function saveCart() {
@@ -160,39 +241,85 @@ function updateCartCount() {
   if (el) el.textContent = state.cart.reduce((s, i) => s + (i.qty || 1), 0);
 }
 
-function addToCart(product) {
-  const idx = state.cart.findIndex(p => p.id === product.id);
-  if (idx >= 0) {
-    state.cart[idx].qty = (state.cart[idx].qty || 1) + 1;
-  } else {
-    state.cart.push({ ...product, qty: 1 });
-  }
-  saveCart();
+// ===== Shipment Tracking Modal =====
+function openShipmentModal(orderId) {
+  // Remove existing shipment modal if any
+  const existing = document.getElementById('shipment-modal');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal';
+  overlay.id = 'shipment-modal';
+  overlay.innerHTML = `
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width:500px;">
+      <button class="modal-close">×</button>
+      <div style="padding:28px;">
+        <h2 style="margin-bottom:8px;">Shipments for Order #${orderId}</h2>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:20px;">Tracking timeline</p>
+        <div id="shipment-timeline" class="shipment-timeline">
+          <div class="loading-overlay">${createSpinner().outerHTML}<span>Loading shipments...</span></div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const closeModal = () => overlay.remove();
+  overlay.querySelector('.modal-close').addEventListener('click', closeModal);
+  overlay.querySelector('.modal-backdrop').addEventListener('click', closeModal);
+
+  // Fetch and render shipments
+  (async () => {
+    try {
+      const shipments = await apiFetch(`/shipments/order/${orderId}`);
+      const timeline = document.getElementById('shipment-timeline');
+      if (!shipments.length) {
+        timeline.innerHTML = '<div class="empty-state">No shipments tracked for this order yet.</div>';
+        return;
+      }
+      timeline.innerHTML = '';
+      const statusOrder = ['pending', 'processing', 'shipped', 'delivered'];
+      // Sort by status order, then by date
+      shipments.sort((a, b) => {
+        const aIdx = statusOrder.indexOf(a.status);
+        const bIdx = statusOrder.indexOf(b.status);
+        if (aIdx !== bIdx) return aIdx - bIdx;
+        return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+      });
+      shipments.forEach(s => {
+        const step = document.createElement('div');
+        step.className = 'shipment-step';
+        const dotClass = s.status === 'delivered' ? 'completed' : (s.status === 'shipped' || s.status === 'processing' ? 'active' : '');
+        step.innerHTML = `
+          <div class="shipment-dot ${dotClass}"></div>
+          <div class="shipment-info">
+            <strong>${s.status.charAt(0).toUpperCase() + s.status.slice(1)}</strong>
+            ${s.location ? `<span>📍 ${s.location}</span>` : ''}
+            ${s.created_at ? `<span>📅 ${new Date(s.created_at).toLocaleString()}</span>` : ''}
+            ${s.notes ? `<span>📝 ${s.notes}</span>` : ''}
+          </div>
+        `;
+        timeline.appendChild(step);
+      });
+    } catch (err) {
+      const timeline = document.getElementById('shipment-timeline');
+      if (timeline) timeline.innerHTML = '<div class="empty-state">Could not load shipment data.</div>';
+      showToast('Could not load shipments', 'error');
+    }
+  })();
 }
 
-function removeFromCart(productId) {
-  state.cart = state.cart.filter(p => p.id !== productId);
-  saveCart();
-}
-
-function changeCartQty(productId, qty) {
-  const idx = state.cart.findIndex(p => p.id === productId);
-  if (idx >= 0) {
-    state.cart[idx].qty = Math.max(0, qty);
-    if (state.cart[idx].qty === 0) removeFromCart(productId);
-    else saveCart();
-  }
-}
-
-async function fetchProducts() {
+// ===== Product / Category Fetching =====
+async function fetchProducts(page = 1, limit = 100) {
   try {
-    const data = await apiFetch('/products?page=1&limit=100');
+    const data = await apiFetch(`/products?page=${page}&limit=${limit}`);
     if (!data) return [];
     if (Array.isArray(data)) return data;
-    if (Array.isArray(data.products)) return data.products.map(p => ({ ...p }));
+    if (Array.isArray(data.products)) return data.products;
     return [];
   } catch (err) {
-    console.warn('product fetch failed, using fallback', err);
+    console.warn('product fetch failed', err);
     return [];
   }
 }
@@ -208,6 +335,7 @@ async function fetchCategories() {
   }
 }
 
+// ===== Product Rendering =====
 function renderProducts(products = [], categories = []) {
   const grid = document.getElementById('product-grid');
   if (!grid) return;
@@ -216,16 +344,18 @@ function renderProducts(products = [], categories = []) {
     const card = document.createElement('div');
     card.className = 'product-card';
     const title = p.title || p.name || 'Untitled';
-    const price = p.price || p.unit_price || 0;
-    const img = p.image || '/static/product-placeholder.png';
+    const price = p.price || 0;
+    const img = p.image && p.image.trim()
+      ? p.image
+      : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80';
     const categoryName = (categories.find(c => c.id === p.category_id) || {}).name || '';
     card.innerHTML = `
-      <div class="card-media"><img src="${img}" alt="${title}"/></div>
+      <div class="card-media"><img src="${img}" alt="${title}" loading="lazy"/></div>
       <div class="card-body">
         <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;">
           <div>
             <h3>${title}</h3>
-            <p class="product-desc">${(p.description || '').substring(0,120)}</p>
+            <p class="product-desc">${(p.description || '').substring(0, 120)}</p>
             ${categoryName ? `<div class="tag">${categoryName}</div>` : ''}
           </div>
           <div class="card-meta">
@@ -234,16 +364,12 @@ function renderProducts(products = [], categories = []) {
         </div>
         <div class="card-actions">
           <div style="display:flex;gap:12px;">
-            <button class="btn btn-sm btn-primary add-to-cart">Add to cart</button>
-            <button class="btn btn-sm btn-outline view-details">Details</button>
+            <button class="btn btn-sm btn-primary add-to-cart" data-id="${p.id}" data-name="${title}" data-price="${price}">Add to cart</button>
+            <button class="btn btn-sm btn-outline view-details" data-id="${p.id}" data-name="${title}" data-price="${price}" data-description="${(p.description || '').replace(/"/g, '"')}" data-image="${img}" data-stock="${p.stock || 0}">Details</button>
           </div>
         </div>
       </div>
     `;
-
-    const addBtn = card.querySelector('.add-to-cart');
-    addBtn.addEventListener('click', () => { addToCart(p); });
-
     grid.appendChild(card);
   });
 }
@@ -260,30 +386,6 @@ function buildCategoryPills(categories = []) {
     btn.addEventListener('click', () => { btn.classList.toggle('active'); });
     target.appendChild(btn);
   });
-}
-
-function applyClientFilters(allProducts) {
-  const q = document.getElementById('site-search')?.value?.toLowerCase() || '';
-  const min = Number(document.getElementById('min-price')?.value || 0);
-  const maxVal = document.getElementById('max-price')?.value;
-  const max = maxVal ? Number(maxVal) : Number.MAX_SAFE_INTEGER;
-  const activeCats = Array.from(document.querySelectorAll('#category-pills .pill.active')).map(n => Number(n.dataset.id));
-  const sort = document.getElementById('sort-select')?.value || 'default';
-
-  let results = allProducts.filter(p => {
-    const text = `${p.title || p.name} ${p.description || ''}`.toLowerCase();
-    if (q && !text.includes(q)) return false;
-    const price = Number(p.price || p.unit_price || 0);
-    if (price < min || price > max) return false;
-    if (activeCats.length && !activeCats.includes(p.category_id)) return false;
-    return true;
-  });
-
-  if (sort === 'price_asc') results.sort((a,b) => (a.price||a.unit_price||0) - (b.price||b.unit_price||0));
-  if (sort === 'price_desc') results.sort((a,b) => (b.price||b.unit_price||0) - (a.price||a.unit_price||0));
-  if (sort === 'name_asc') results.sort((a,b) => (a.name||a.title||'').localeCompare(b.name||b.title||''));
-
-  renderProducts(results);
 }
 
 function showCartModal() {
@@ -303,12 +405,13 @@ function showCartModal() {
       </div>
     </div>
   `;
-
   document.body.appendChild(overlay);
   const closeBtn = overlay.querySelector('.modal-close');
   const closeSimple = overlay.querySelector('#close-cart');
-  closeBtn.addEventListener('click', () => overlay.remove());
-  closeSimple.addEventListener('click', () => overlay.remove());
+  const closeModal = () => overlay.remove();
+  closeBtn.addEventListener('click', closeModal);
+  closeSimple.addEventListener('click', closeModal);
+  overlay.querySelector('.modal-backdrop').addEventListener('click', closeModal);
 
   const lines = overlay.querySelector('#cart-lines');
   if (state.cart.length === 0) {
@@ -321,7 +424,7 @@ function showCartModal() {
       row.innerHTML = `
         <div>
           <strong>${item.name}</strong>
-          <div style="color:var(--muted)">${formatPrice(item.price || item.unit_price || 0)}</div>
+          <div style="color:var(--muted)">${formatPrice(item.price)}</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <input type="number" min="0" value="${item.qty}" style="width:72px;padding:8px;border-radius:8px;border:1px solid var(--border)" />
@@ -329,45 +432,43 @@ function showCartModal() {
         </div>
       `;
       const input = row.querySelector('input');
-      input.addEventListener('change', (e) => changeCartQty(item.id, Number(e.target.value)));
-      row.querySelector('.remove').addEventListener('click', () => { removeFromCart(item.id); row.remove(); });
+      const itemId = item.id;
+      input.addEventListener('change', (e) => {
+        const idx = state.cart.findIndex(p => p.id === itemId);
+        if (idx >= 0) {
+          state.cart[idx].qty = Math.max(0, Number(e.target.value));
+          if (state.cart[idx].qty === 0) state.cart.splice(idx, 1);
+          saveCart();
+          if (state.cart.length === 0) lines.innerHTML = `<div class="empty-state">Your cart is empty</div>`;
+        }
+      });
+      row.querySelector('.remove').addEventListener('click', () => {
+        state.cart = state.cart.filter(p => p.id !== itemId);
+        saveCart();
+        row.remove();
+        if (state.cart.length === 0) lines.innerHTML = `<div class="empty-state">Your cart is empty</div>`;
+      });
       lines.appendChild(row);
     });
   }
-
   document.getElementById('checkout-btn')?.addEventListener('click', () => {
-    alert('Checkout is mocked in this demo.');
+    showToast('Checkout is mocked in this demo.', 'info');
   });
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
+// ===== DOM Ready Init =====
+document.addEventListener('DOMContentLoaded', () => {
   updateCartCount();
   ensureAuthMessage();
+  initMobileMenu();
 
-  const allProducts = await fetchProducts();
-  const categories = await fetchCategories();
-  renderProducts(allProducts, categories);
-  buildCategoryPills(categories);
-
-  document.getElementById('cart-button')?.addEventListener('click', showCartModal);
-  document.getElementById('apply-filters')?.addEventListener('click', () => applyClientFilters(allProducts));
-  document.getElementById('clear-filters')?.addEventListener('click', () => {
-    document.getElementById('min-price').value = '';
-    document.getElementById('max-price').value = '';
-    document.querySelectorAll('#category-pills .pill.active').forEach(n => n.classList.remove('active'));
-    document.getElementById('site-search').value = '';
-    renderProducts(allProducts, categories);
-  });
-  document.getElementById('site-search')?.addEventListener('input', () => applyClientFilters(allProducts));
-  document.getElementById('sort-select')?.addEventListener('change', () => applyClientFilters(allProducts));
-
-  // auth modal bindings
+  // Auth modal bindings
   document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeAuthModal));
   document.getElementById('show-register')?.addEventListener('click', (e) => { e.preventDefault(); openAuthModal('register'); });
   document.getElementById('show-login')?.addEventListener('click', (e) => { e.preventDefault(); openAuthModal('login'); });
   document.getElementById('login-submit')?.addEventListener('click', (e) => { e.preventDefault(); handleLogin(); });
   document.getElementById('register-submit')?.addEventListener('click', (e) => { e.preventDefault(); handleRegister(); });
 
-  // optionally open auth modal when clicking brand
-  document.querySelector('.brand')?.addEventListener('click', () => openAuthModal('login'));
+  // Cart button
+  document.getElementById('cart-button')?.addEventListener('click', showCartModal);
 });

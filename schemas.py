@@ -68,10 +68,25 @@ class Login(BaseModel):
     password: str
 
 
-class OrderCreate(BaseModel):
+class OrderItemCreate(BaseModel):
     product_id: int
     quantity: int
+
+
+class OrderCreate(BaseModel):
+    items: list[OrderItemCreate]
     coupon_code: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class OrderItemResponse(BaseModel):
+    id: int
+    product_id: int
+    product_name: str
+    quantity: int
+    price: float
 
     class Config:
         from_attributes = True
@@ -79,13 +94,13 @@ class OrderCreate(BaseModel):
 
 class OrderResponse(BaseModel):
     id: int
-    product_name: str
-    quantity: int
     total_price: float
     discount_amount: float
     coupon_code: Optional[str]
     customer: str
     status: str
+    items: list[OrderItemResponse] = []
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True

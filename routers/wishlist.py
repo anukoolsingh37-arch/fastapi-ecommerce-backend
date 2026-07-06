@@ -100,7 +100,7 @@ def move_wishlist_item_to_cart(
         user_id=current_user["id"]
     )
 
-    product.stock -= cart_data.quantity
+    # Stock is only decremented at checkout, not during cart add/wishlist move
     db.delete(wishlist_item)
     db.add(new_cart_item)
     db.commit()

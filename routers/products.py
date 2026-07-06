@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy import or_, func, desc
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+import os
+import shutil
+import uuid
 
 from database import get_db
 from auth.oauth2 import get_current_user
@@ -11,6 +14,9 @@ import schemas
 router = APIRouter(
     tags=["Products"]
 )
+
+UPLOAD_DIR = "static/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 @router.post("/products")
@@ -122,9 +128,10 @@ def search_products(
         )
 
     if in_stock is not None:
-        query = query.filter(
-            models.Product.stock > 0 if in_stock else models.Product.stock == 0
-        )
+        if in_stock:
+            query = query.filter(models.Product.stock > 0)
+        else:
+            query = query.filter(models.Product.stock == 0)
 
     if min_price is not None:
         query = query.filter(
@@ -396,6 +403,30 @@ def update_product_stock(
         "message": "Product stock updated successfully",
         "product_id": product.id,
         "stock": product.stock
+    }
+
+
+@router.post("/upload")
+def upload_image(
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    if not current_user.get("is_admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Admin privileges required"
+        )
+
+    ext = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
+    filename = f"{uuid.uuid4().hex}{ext}"
+    filepath = os.path.join(UPLOAD_DIR, filename)
+
+    with open(filepath, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "message": "Image uploaded successfully",
+        "url": f"/static/uploads/{filename}"
     }
 
 

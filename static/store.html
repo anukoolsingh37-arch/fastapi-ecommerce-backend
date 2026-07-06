@@ -10,6 +10,7 @@
   <div class="page-shell store-shell">
     <header class="topbar">
       <div class="brand">ShopEase</div>
+      <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
       <nav class="nav-links">
         <a href="#shop">Shop</a>
         <a href="#cart">Cart</a>
@@ -164,6 +165,22 @@
             <button id="modal-add-cart" class="btn btn-primary btn-full">Add to Cart</button>
             <button id="modal-add-wishlist" class="btn btn-outline btn-full">Wishlist</button>
           </div>
+          <div class="detail-reviews" style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px;">
+            <h4 style="font-size:0.95rem;margin-bottom:8px;">Reviews <span id="modal-review-summary"></span></h4>
+            <div id="modal-reviews" class="panel-list" style="max-height:200px;overflow-y:auto;"></div>
+            <div style="margin-top:12px;display:grid;gap:8px;" id="modal-review-form">
+              <select id="modal-review-rating" style="padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);">
+                <option value="5">★★★★★ 5</option>
+                <option value="4">★★★★☆ 4</option>
+                <option value="3">★★★☆☆ 3</option>
+                <option value="2">★★☆☆☆ 2</option>
+                <option value="1">★☆☆☆☆ 1</option>
+              </select>
+              <textarea id="modal-review-comment" rows="2" style="padding:8px;border:1px solid var(--border);border-radius:var(--radius-sm);font-family:var(--font);" placeholder="Write a review..."></textarea>
+              <button id="modal-submit-review" class="btn btn-primary btn-sm">Submit Review</button>
+              <div id="modal-review-feedback" class="auth-message" style="font-size:0.8rem;">Login to leave a review.</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -198,62 +215,12 @@
     let categoryMap = {};
     let categoryLookup = {};
     let currentCoupon = '';
-
-    async function apiFetch(path, options = {}) {
-      const headers = options.headers || {};
-      if (!options.headers) {
-        headers['Content-Type'] = 'application/json';
-      }
-      if (state.token) {
-        headers['Authorization'] = `Bearer ${state.token}`;
-      }
-      const response = await fetch(path, { ...options, headers });
-      const body = await response.json();
-      if (!response.ok) {
-        throw body;
-      }
-      return body;
-    }
-
-    async function registerUser(event) {
-      event.preventDefault();
-      const username = document.getElementById('register-username').value.trim();
-      const email = document.getElementById('register-email').value.trim();
-      const password = document.getElementById('register-password').value;
-
-      try {
-        const result = await apiFetch('/users/', {
-          method: 'POST',
-          body: { username, email, password }
-        });
-        authMessage.textContent = result.message || 'Registration completed.';
-      } catch (error) {
-        authMessage.textContent = error.detail || 'Registration failed.';
-      }
-    }
-
-    async function loginUser(event) {
-      event.preventDefault();
-      const username = document.getElementById('login-username').value.trim();
-      const password = document.getElementById('login-password').value;
-      const body = new URLSearchParams();
-      body.append('username', username);
-      body.append('password', password);
-
-      const response = await fetch('/login', {
-        method: 'POST',
-        body,
-      });
-      const result = await response.json();
-
-      if (response.ok && result.access_token) {
-        state.token = result.access_token;
-        state.user = result.user;
-        authMessage.textContent = `Logged in as ${result.user.username}`;
-      } else {
-        authMessage.textContent = result.detail || 'Login failed';
-      }
-    }
+    const modalReviewList = document.getElementById('modal-reviews');
+    const modalReviewSummary = document.getElementById('modal-review-summary');
+    const modalReviewRating = document.getElementById('modal-review-rating');
+    const modalReviewComment = document.getElementById('modal-review-comment');
+    const modalReviewSubmit = document.getElementById('modal-submit-review');
+    const modalReviewFeedback = document.getElementById('modal-review-feedback');
 
     function deriveCategory(product) {
       if (product.category_id && categoryLookup[product.category_id]) {
@@ -511,6 +478,54 @@
       }
     }
 
+    async function loadModalReviews(productId) {
+      try {
+        const reviews = await apiFetch(`/reviews/product/${productId}`);
+        modalReviewList.innerHTML = '';
+        if (!reviews.length) {
+          modalReviewSummary.textContent = '(0 reviews)';
+          modalReviewList.appendChild(createPanelItem('No reviews yet', 'Be the first to share your thoughts.'));
+          return;
+        }
+        const avg = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+        modalReviewSummary.textContent = `(${reviews.length}) ★ ${avg.toFixed(1)}`;
+        reviews.forEach(review => {
+          const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+          modalReviewList.appendChild(createPanelItem(`${review.user} • ${stars}`, review.comment));
+        });
+      } catch (error) {
+        modalReviewList.innerHTML = '';
+        modalReviewSummary.textContent = '(unavailable)';
+        modalReviewList.appendChild(createPanelItem('Unable to load reviews', error.detail || 'Try again later.'));
+      }
+    }
+
+    async function submitModalReview() {
+      if (!state.token) {
+        modalReviewFeedback.textContent = 'Login to submit a review.';
+        return;
+      }
+      if (!selectedProduct) return;
+      const rating = Number(modalReviewRating.value);
+      const comment = modalReviewComment.value.trim();
+      if (!comment) {
+        modalReviewFeedback.textContent = 'Please write a comment.';
+        return;
+      }
+      try {
+        await apiFetch('/reviews/', {
+          method: 'POST',
+          body: { product_id: Number(selectedProduct.id), rating, comment }
+        });
+        modalReviewFeedback.textContent = 'Review submitted!';
+        modalReviewComment.value = '';
+        modalReviewRating.value = '5';
+        loadModalReviews(selectedProduct.id);
+      } catch (error) {
+        modalReviewFeedback.textContent = error.detail || 'Unable to submit review.';
+      }
+    }
+
     function openModal(product) {
       selectedProduct = product;
       modalImage.src = getImageUrl(product);
@@ -518,7 +533,9 @@
       modalDescription.textContent = product.description || 'Premium product available from ShopEase.';
       modalPrice.textContent = `$${product.price.toFixed(2)}`;
       modalStock.textContent = `${product.stock} in stock`;
+      modalReviewFeedback.textContent = state.token ? 'Write your review above.' : 'Login to leave a review.';
       productModal.classList.remove('hidden');
+      loadModalReviews(product.id);
     }
 
     function closeModal() {
@@ -526,8 +543,47 @@
       selectedProduct = null;
     }
 
-    document.getElementById('register-form').addEventListener('submit', registerUser);
-    document.getElementById('login-form').addEventListener('submit', loginUser);
+    document.getElementById('login-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!username || !password) {
+        authMessage.textContent = 'Please enter username and password.';
+        return;
+      }
+      try {
+        const result = await loginUser(username, password);
+        authMessage.textContent = `Welcome back, ${result.user.username}!`;
+        showToast('Signed in successfully', 'success');
+        loadCart();
+        loadWishlist();
+      } catch (error) {
+        authMessage.textContent = error.message || 'Login failed.';
+        showToast('Login failed', 'error');
+      }
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const email = document.getElementById('register-email').value.trim();
+      const password = document.getElementById('register-password').value;
+      if (!username || !email || !password) {
+        authMessage.textContent = 'Please fill in all fields.';
+        return;
+      }
+      try {
+        const result = await registerUser(username, email, password);
+        authMessage.textContent = result.message || 'Account created! You can now sign in.';
+        showToast('Registration successful!', 'success');
+        document.getElementById('register-username').value = '';
+        document.getElementById('register-email').value = '';
+        document.getElementById('register-password').value = '';
+      } catch (error) {
+        authMessage.textContent = error.body?.detail || error.message || 'Registration failed.';
+        showToast('Registration failed', 'error');
+      }
+    });
     document.getElementById('apply-filters').addEventListener('click', loadProducts);
     document.getElementById('refresh-products').addEventListener('click', () => {
       searchInput.value = '';
@@ -601,6 +657,8 @@
         addToWishlist(selectedProduct.id);
       }
     });
+
+    modalReviewSubmit.addEventListener('click', submitModalReview);
 
     window.addEventListener('DOMContentLoaded', async () => {
       ensureAuthMessage();

@@ -165,17 +165,24 @@ def seed_data():
             starter_product = db.query(models.Product).filter(models.Product.title == 'Portable Power Bank').first()
             if starter_product and starter_product.stock > 0:
                 demo_order = models.Order(
-                    product_id=starter_product.id,
-                    product_name=starter_product.title,
-                    quantity=1,
                     total_price=starter_product.price,
                     discount_amount=0.0,
                     coupon_code=None,
                     customer=demo_user.email,
+                    customer_id=demo_user.id,
                     status='delivered'
                 )
-                starter_product.stock -= 1
                 db.add(demo_order)
+                db.flush()
+                order_item = models.OrderItem(
+                    order_id=demo_order.id,
+                    product_id=starter_product.id,
+                    product_name=starter_product.title,
+                    quantity=1,
+                    price=starter_product.price
+                )
+                db.add(order_item)
+                starter_product.stock -= 1
                 db.commit()
     finally:
         db.close()

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
+from typing import Optional
 
 import models
 import schemas
@@ -141,10 +143,16 @@ def delete_user(
     }
 
 
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+
 @router.put("/{id}")
 def update_user(
     id: int,
-    updated_user: schemas.UserBase,
+    updated_user: UserUpdate,
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
@@ -165,15 +173,30 @@ def update_user(
             detail="Operation not permitted"
         )
 
-    hashed_password = Hash.bcrypt(updated_user.password)
+    update_data = {}
+    if updated_user.username is not None:
+        # Check if username is taken
+        existing = db.query(models.User).filter(
+            models.User.username == updated_user.username,
+            models.User.id != id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Username already taken")
+        update_data["username"] = updated_user.username
+    if updated_user.email is not None:
+        existing = db.query(models.User).filter(
+            models.User.email == updated_user.email,
+            models.User.id != id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already in use")
+        update_data["email"] = updated_user.email
+    if updated_user.password is not None:
+        update_data["password"] = Hash.bcrypt(updated_user.password)
 
-    user.update({
-        "username": updated_user.username,
-        "email": updated_user.email,
-        "password": hashed_password
-    })
-
-    db.commit()
+    if update_data:
+        user.update(update_data)
+        db.commit()
 
     return {
         "message": "User updated successfully"

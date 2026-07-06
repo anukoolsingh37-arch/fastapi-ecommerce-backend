@@ -106,8 +106,7 @@ def update_cart_item(
             detail="Not enough stock available"
         )
 
-    product.stock += cart_item.quantity
-    product.stock -= update_data.quantity
+    # Stock is only decremented at checkout, not on cart updates
     cart_item.quantity = update_data.quantity
 
     db.commit()
@@ -183,27 +182,34 @@ def checkout_cart(
         total_price = max(total_price - discount_amount, 0.0)
         coupon.used_count += 1
 
-    order_description = ", ".join(
-        f"{item.product_name} x{item.quantity}" for item in cart_items
-    )
-
     new_order = models.Order(
-        product_name=order_description,
-        quantity=total_quantity,
         total_price=total_price,
         discount_amount=discount_amount,
         coupon_code=coupon_code,
-        customer=current_user["email"]
+        customer=current_user["email"],
+        customer_id=current_user["id"],
+        status="pending"
     )
+
+    db.add(new_order)
+    db.flush()
 
     for item in cart_items:
         product = db.query(models.Product).filter(
             models.Product.id == item.product_id
         ).first()
         product.stock -= item.quantity
+
+        order_item = models.OrderItem(
+            order_id=new_order.id,
+            product_id=item.product_id,
+            product_name=item.product_name,
+            quantity=item.quantity,
+            price=item.price
+        )
+        db.add(order_item)
         db.delete(item)
 
-    db.add(new_order)
     db.commit()
     db.refresh(new_order)
 
@@ -212,7 +218,7 @@ def checkout_cart(
         "order_id": new_order.id,
         "total_price": total_price,
         "discount_amount": discount_amount,
-        "items": order_description
+        "items": len(cart_items)
     }
 
 

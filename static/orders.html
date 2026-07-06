@@ -152,7 +152,21 @@
           return;
         }
         orders.forEach(order => {
-          ordersList.appendChild(createPanelItem(`Order #${order.id} • ${order.status}`, `${order.product_name} • $${order.total_price.toFixed(2)}`));
+          const itemsList = order.items && order.items.length
+            ? order.items.map(i => `${i.product_name} (x${i.quantity})`).join(', ')
+            : 'No items';
+          const card = document.createElement('div');
+          card.className = 'panel-card';
+          card.innerHTML = `
+            <div>
+              <strong>Order #${order.id} • ${order.status}</strong>
+              <span>${itemsList} • $${order.total_price.toFixed(2)}</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button class="btn btn-sm btn-outline view-order-shipments" data-order-id="${order.id}">📦 Track</button>
+            </div>
+          `;
+          ordersList.appendChild(card);
         });
       } catch (error) {
         ordersList.innerHTML = '';
@@ -211,6 +225,12 @@
         renderOrders();
       } catch (error) {
         authMessage.textContent = error.detail || 'Unable to complete checkout.';
+      }
+    });
+
+    ordersList.addEventListener('click', event => {
+      if (event.target.matches('.view-order-shipments')) {
+        openShipmentModal(Number(event.target.dataset.orderId));
       }
     });
 
