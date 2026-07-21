@@ -12,6 +12,7 @@ function saveAuth(token, user) {
   state.user = user;
   localStorage.setItem(AUTH_TOKEN_KEY, token);
   localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+  refreshCartCount();
 }
 
 function clearAuth() {
@@ -228,17 +229,25 @@ async function handleRegister() {
   }
 }
 
-// ===== Client-side Cart Helpers =====
-state.cart = JSON.parse(localStorage.getItem('shop_ease_cart') || '[]');
+// ===== App Cart Helpers =====
+async function refreshCartCount() {
+  if (!state.token) {
+    updateCartCount(0);
+    return;
+  }
 
-function saveCart() {
-  localStorage.setItem('shop_ease_cart', JSON.stringify(state.cart));
-  updateCartCount();
+  try {
+    const items = await apiFetch('/cart/');
+    const count = items.reduce((s, item) => s + (item.quantity || 0), 0);
+    updateCartCount(count);
+  } catch (error) {
+    updateCartCount(0);
+  }
 }
 
-function updateCartCount() {
+function updateCartCount(count = 0) {
   const el = document.getElementById('cart-count');
-  if (el) el.textContent = state.cart.reduce((s, i) => s + (i.qty || 1), 0);
+  if (el) el.textContent = String(count);
 }
 
 // ===== Shipment Tracking Modal =====
@@ -399,7 +408,7 @@ function showCartModal() {
         <h2>Your cart</h2>
         <div id="cart-lines"></div>
         <div style="margin-top:18px;display:flex;justify-content:flex-end;gap:12px;">
-          <button id="checkout-btn" class="btn btn-primary">Checkout (mock)</button>
+          <button id="open-orders-btn" class="btn btn-primary">View Orders</button>
           <button id="close-cart" class="btn btn-outline">Close</button>
         </div>
       </div>
@@ -414,51 +423,57 @@ function showCartModal() {
   overlay.querySelector('.modal-backdrop').addEventListener('click', closeModal);
 
   const lines = overlay.querySelector('#cart-lines');
-  if (state.cart.length === 0) {
-    lines.innerHTML = `<div class="empty-state">Your cart is empty</div>`;
-  } else {
-    lines.innerHTML = '';
-    state.cart.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'panel-card';
-      row.innerHTML = `
-        <div>
-          <strong>${item.name}</strong>
-          <div style="color:var(--muted)">${formatPrice(item.price)}</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <input type="number" min="0" value="${item.qty}" style="width:72px;padding:8px;border-radius:8px;border:1px solid var(--border)" />
-          <button class="btn btn-sm btn-outline remove">Remove</button>
-        </div>
-      `;
-      const input = row.querySelector('input');
-      const itemId = item.id;
-      input.addEventListener('change', (e) => {
-        const idx = state.cart.findIndex(p => p.id === itemId);
-        if (idx >= 0) {
-          state.cart[idx].qty = Math.max(0, Number(e.target.value));
-          if (state.cart[idx].qty === 0) state.cart.splice(idx, 1);
-          saveCart();
-          if (state.cart.length === 0) lines.innerHTML = `<div class="empty-state">Your cart is empty</div>`;
-        }
-      });
-      row.querySelector('.remove').addEventListener('click', () => {
-        state.cart = state.cart.filter(p => p.id !== itemId);
-        saveCart();
-        row.remove();
-        if (state.cart.length === 0) lines.innerHTML = `<div class="empty-state">Your cart is empty</div>`;
-      });
-      lines.appendChild(row);
-    });
-  }
-  document.getElementById('checkout-btn')?.addEventListener('click', () => {
-    showToast('Checkout is mocked in this demo.', 'info');
+  const openOrdersBtn = overlay.querySelector('#open-orders-btn');
+  openOrdersBtn.addEventListener('click', () => {
+    window.location.href = '/orders';
   });
+
+  if (!state.token) {
+    lines.innerHTML = `<div class="empty-state">Login to view your cart.</div>`;
+    return;
+  }
+
+  (async () => {
+    try {
+      const cartItems = await apiFetch('/cart/');
+      if (!cartItems.length) {
+        lines.innerHTML = `<div class="empty-state">Your cart is empty</div>`;
+        return;
+      }
+
+      lines.innerHTML = '';
+      cartItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'panel-card';
+        row.innerHTML = `
+          <div>
+            <strong>${item.product_name}</strong>
+            <div style="color:var(--muted)">${item.quantity} × ${formatPrice(item.price)}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn btn-sm btn-outline remove-item" data-cart-id="${item.id}">Remove</button>
+          </div>
+        `;
+        row.querySelector('.remove-item').addEventListener('click', async () => {
+          try {
+            await apiFetch(`/cart/${item.id}`, { method: 'DELETE' });
+            row.remove();
+            refreshCartCount();
+          } catch (err) {
+            showToast(err.body?.detail || err.message || 'Unable to remove item', 'error');
+          }
+        });
+        lines.appendChild(row);
+      });
+    } catch (error) {
+      lines.innerHTML = `<div class="empty-state">Could not load cart.</div>`;
+    }
+  })();
 }
 
 // ===== DOM Ready Init =====
 document.addEventListener('DOMContentLoaded', () => {
-  updateCartCount();
+  refreshCartCount();
   ensureAuthMessage();
   initMobileMenu();
 

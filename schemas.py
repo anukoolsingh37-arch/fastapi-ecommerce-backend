@@ -68,6 +68,17 @@ class Login(BaseModel):
     password: str
 
 
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str
+    refresh_token: Optional[str] = None
+    user: Optional[UserResponse] = None
+
+
 class OrderItemCreate(BaseModel):
     product_id: int
     quantity: int

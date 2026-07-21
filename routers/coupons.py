@@ -57,6 +57,32 @@ def list_coupons(
     return db.query(models.Coupon).all()
 
 
+@router.get("/validate")
+def validate_coupon(
+    code: str,
+    db: Session = Depends(get_db)
+):
+    coupon = db.query(models.Coupon).filter(
+        models.Coupon.code == code,
+        models.Coupon.active == True
+    ).first()
+
+    if not coupon:
+        raise HTTPException(
+            status_code=404,
+            detail="Coupon not found or inactive"
+        )
+
+    return {
+        "code": coupon.code,
+        "discount_percent": coupon.discount_percent,
+        "active": coupon.active,
+        "max_uses": coupon.max_uses,
+        "used_count": coupon.used_count,
+        "expires_at": coupon.expires_at
+    }
+
+
 @router.get("/{coupon_id}", response_model=schemas.CouponResponse)
 def get_coupon(
     coupon_id: int,
@@ -135,29 +161,3 @@ def delete_coupon(
     db.commit()
 
     return {"message": "Coupon deleted successfully"}
-
-
-@router.get("/validate")
-def validate_coupon(
-    code: str,
-    db: Session = Depends(get_db)
-):
-    coupon = db.query(models.Coupon).filter(
-        models.Coupon.code == code,
-        models.Coupon.active == True
-    ).first()
-
-    if not coupon:
-        raise HTTPException(
-            status_code=404,
-            detail="Coupon not found or inactive"
-        )
-
-    return {
-        "code": coupon.code,
-        "discount_percent": coupon.discount_percent,
-        "active": coupon.active,
-        "max_uses": coupon.max_uses,
-        "used_count": coupon.used_count,
-        "expires_at": coupon.expires_at
-    }

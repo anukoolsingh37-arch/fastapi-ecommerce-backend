@@ -70,7 +70,7 @@ def create_user(user: schemas.UserBase, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/")
+@router.get("/", response_model=list[schemas.UserResponse])
 def get_users(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -87,7 +87,7 @@ def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
 
-@router.get("/{id}")
+@router.get("/{id}", response_model=schemas.UserResponse)
 def get_user(
     id: int,
     db: Session = Depends(get_db),
@@ -197,6 +197,16 @@ def update_user(
     if update_data:
         user.update(update_data)
         db.commit()
+        db.refresh(user.first())
+
+        return {
+            "message": "User updated successfully",
+            "user": {
+                "id": id,
+                "username": update_data.get("username", current_user.get("username")),
+                "email": update_data.get("email", current_user.get("email"))
+            }
+        }
 
     return {
         "message": "User updated successfully"

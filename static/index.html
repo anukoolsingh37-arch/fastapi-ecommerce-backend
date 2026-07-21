@@ -8,46 +8,53 @@
 </head>
 <body>
   <div class="page-shell landing-shell">
-    <header class="topbar">
-      <div style="display:flex;align-items:center;gap:18px;">
-        <div class="brand">ShopEase</div>
-        <div class="search-wrap">
-          <input id="site-search" type="search" placeholder="Search products, categories, prices..." />
+    <header class="topbar no-print">
+      <div class="nav-container">
+        <div style="display:flex;align-items:center;gap:18px;flex:1;">
+          <div class="brand">ShopEase</div>
+          <div class="search-wrap">
+            <input id="site-search" type="search" placeholder="Search products, categories, prices..." />
+          </div>
         </div>
+
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+
+        <nav class="nav-links">
+          <a href="/store">Store</a>
+          <a href="/orders">Orders</a>
+          <a href="/admin">Admin</a>
+          <a href="/docs">API Docs</a>
+          <a href="#features">Features</a>
+          <button id="cart-button" class="btn btn-sm cart-btn" aria-label="Open cart">
+            Cart <span id="cart-count" class="cart-badge">0</span>
+          </button>
+        </nav>
       </div>
-
-      <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
-
-      <nav class="nav-links">
-        <a href="/store">Store</a>
-        <a href="/orders">Orders</a>
-        <a href="/admin">Admin</a>
-        <a href="/docs">API Docs</a>
-        <a href="#features">Features</a>
-        <button id="cart-button" class="btn btn-sm" aria-label="Open cart">Cart <span id="cart-count" class="cart-badge">0</span></button>
-      </nav>
     </header>
 
     <main class="landing-main">
       <section class="landing-hero">
         <div class="hero-copy">
-          <span class="eyebrow">API-powered storefront</span>
+          <span class="eyebrow">✨ API-powered storefront</span>
           <h1>Launch a beautiful ecommerce experience on Render with FastAPI.</h1>
           <p>Keep the backend API intact while giving customers a dedicated store, product discovery, cart management, and checkout preview.</p>
           <div class="hero-actions">
-            <a href="/store" class="btn btn-primary">Open Store</a>
-            <a href="/docs" class="btn btn-outline">Explore API Docs</a>
+            <a href="/store" class="btn btn-primary btn-lg">Open Store →</a>
+            <a href="/docs" class="btn btn-outline btn-lg">Explore API Docs</a>
           </div>
           <div class="hero-highlights">
-            <div>
+            <div class="highlight-card">
+              <div class="highlight-icon">🛍️</div>
               <strong>Polished storefront</strong>
               <p>A clean shopping experience that works across mobile and desktop.</p>
             </div>
-            <div>
+            <div class="highlight-card">
+              <div class="highlight-icon">⚡</div>
               <strong>FastAPI backend</strong>
               <p>API routes remain available for integrations, docs, and automation.</p>
             </div>
-            <div>
+            <div class="highlight-card">
+              <div class="highlight-icon">🚀</div>
               <strong>Render-ready</strong>
               <p>Deployed live with a modern UI and complete API accessibility.</p>
             </div>
@@ -55,22 +62,22 @@
         </div>
 
         <aside class="stats-card">
-          <div class="stat-pill">Live on Render</div>
+          <div class="stat-pill">🌟 Live on Render</div>
           <div class="stat-block">
             <strong>Modern ecommerce UI</strong>
             <p>Browse products, filter instantly, and manage cart items with ease.</p>
           </div>
           <div class="feature-list">
-            <div>
-              <h3>Fast search</h3>
+            <div class="feature-item">
+              <h3>🔍 Fast search</h3>
               <p>Find items by name, category, or price range.</p>
             </div>
-            <div>
-              <h3>Wishlist flow</h3>
+            <div class="feature-item">
+              <h3>❤️ Wishlist flow</h3>
               <p>Save favorites to review later and keep shopping momentum.</p>
             </div>
-            <div>
-              <h3>Developer friendly</h3>
+            <div class="feature-item">
+              <h3>💻 Developer friendly</h3>
               <p>Use `/docs` for API testing and integration preview.</p>
             </div>
           </div>
@@ -79,10 +86,13 @@
 
       <section class="shop-section">
         <div class="section-heading">
-          <h2>Featured products</h2>
+          <div>
+            <h2>Featured products</h2>
+            <p> Discover our handpicked selection of premium products</p>
+          </div>
           <div style="display:flex;gap:12px;align-items:center;">
             <select id="sort-select" class="pill">
-              <option value="default">Sort</option>
+              <option value="default">Sort by: Featured</option>
               <option value="price_asc">Price: Low → High</option>
               <option value="price_desc">Price: High → Low</option>
               <option value="name_asc">Name: A → Z</option>
@@ -92,23 +102,23 @@
 
         <div class="filter-panel">
           <div class="filter-group">
-            <label>Category</label>
+            <label>📂 Category</label>
             <div id="category-pills" class="pill-group"></div>
           </div>
           <div class="filter-group inline-group">
             <div>
-              <label>Min price</label>
+              <label>💰 Min price</label>
               <input id="min-price" type="number" placeholder="0" />
             </div>
             <div>
-              <label>Max price</label>
+              <label>💰 Max price</label>
               <input id="max-price" type="number" placeholder="9999" />
             </div>
           </div>
           <div class="filter-group">
             <label>&nbsp;</label>
             <div style="display:flex;gap:8px;">
-              <button id="apply-filters" class="btn btn-sm">Apply</button>
+              <button id="apply-filters" class="btn btn-sm btn-primary">Apply Filters</button>
               <button id="clear-filters" class="btn btn-sm btn-outline">Clear</button>
             </div>
           </div>
@@ -117,61 +127,470 @@
         <div id="product-grid" class="product-grid"></div>
       </section>
 
-      <div id="auth-modal" class="modal hidden" aria-hidden="true">
-        <div class="modal-backdrop"></div>
-        <div class="modal-content">
-          <button class="modal-close">×</button>
-          <div style="display:grid;grid-template-columns:1fr;gap:18px;padding:28px;min-width:320px;">
-            <div class="auth-card">
-              <div class="auth-header">
-                <h2 id="auth-title">Sign in</h2>
-                <p id="auth-message">Login to access cart, wishlist, and orders.</p>
-              </div>
-              <div id="auth-forms" class="auth-forms">
-                <div id="login-form" class="form-sm">
-                  <label>Username or email</label>
-                  <input id="login-username" />
-                  <label>Password</label>
-                  <input id="login-password" type="password" />
-                  <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <button id="show-register" class="btn btn-outline">Register</button>
-                    <button id="login-submit" class="btn btn-primary">Sign in</button>
-                  </div>
-                </div>
-
-                <div id="register-form" class="form-sm" style="display:none;">
-                  <label>Username</label>
-                  <input id="reg-username" />
-                  <label>Email</label>
-                  <input id="reg-email" />
-                  <label>Password</label>
-                  <input id="reg-password" type="password" />
-                  <div style="display:flex;gap:8px;justify-content:flex-end;">
-                    <button id="show-login" class="btn btn-outline">Back</button>
-                    <button id="register-submit" class="btn btn-primary">Create account</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <section id="features" class="feature-row">
-        <article>
+        <article class="feature-card">
+          <div class="feature-icon-large">🎯</div>
           <h3>Designed for real product discovery</h3>
           <p>Build a storefront that feels polished without touching your backend code.</p>
         </article>
-        <article>
+        <article class="feature-card">
+          <div class="feature-icon-large">📱</div>
           <h3>Responsive and fast</h3>
           <p>Every page adapts to mobile screens, with fast load times and a bright, modern look.</p>
         </article>
-        <article>
+        <article class="feature-card">
+          <div class="feature-icon-large">🔗</div>
           <h3>Store + API together</h3>
           <p>The store is the customer-facing frontend, while `/docs` stays available for backend development.</p>
         </article>
       </section>
     </main>
+
+    <footer class="site-footer no-print">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>🛒 ShopEase</h3>
+          <p style="color: var(--text-muted); line-height: 1.6;">A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
+          <div class="social-links">
+            <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
+            <a href="#" class="social-link" aria-label="GitHub">⌨</a>
+            <a href="#" class="social-link" aria-label="Discord">💬</a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Shop</h3>
+          <ul>
+            <li><a href="/store">Browse Products</a></li>
+            <li><a href="/store#cart">Shopping Cart</a></li>
+            <li><a href="/store#wishlist">Wishlist</a></li>
+            <li><a href="/orders">Order History</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Account</h3>
+          <ul>
+            <li><a href="#" onclick="openAuthModal('login'); return false;">Sign In</a></li>
+            <li><a href="#" onclick="openAuthModal('register'); return false;">Create Account</a></li>
+            <li><a href="/orders">My Orders</a></li>
+            <li><a href="/admin">Admin Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Developer</h3>
+          <ul>
+            <li><a href="/docs">API Documentation</a></li>
+            <li><a href="https://github.com" target="_blank">GitHub Repository</a></li>
+            <li><a href="https://render.com" target="_blank">Render Hosting</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 ShopEase. Built with ❤️ using FastAPI + Modern CSS</p>
+      </div>
+    </footer>
   </div>
+
+  <div id="auth-modal" class="modal hidden" aria-hidden="true">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <button class="modal-close">×</button>
+      <div style="display:grid;grid-template-columns:1fr;gap:18px;padding:28px;min-width:320px;">
+        <div class="auth-card">
+          <div class="auth-header">
+            <h2 id="auth-title">Sign in</h2>
+            <p id="auth-message">Login to access cart, wishlist, and orders.</p>
+          </div>
+          <div id="auth-forms" class="auth-forms">
+            <div id="login-form" class="form-sm">
+              <label>Username or email</label>
+              <input id="login-username" />
+              <label>Password</label>
+              <input id="login-password" type="password" />
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button id="show-register" class="btn btn-outline">Create Account</button>
+                <button id="login-submit" class="btn btn-primary">Sign in</button>
+              </div>
+            </div>
+
+            <div id="register-form" class="form-sm" style="display:none;">
+              <label>Username</label>
+              <input id="reg-username" />
+              <label>Email</label>
+              <input id="reg-email" />
+              <label>Password</label>
+              <input id="reg-password" type="password" />
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button id="show-login" class="btn btn-outline">Back to Login</button>
+                <button id="register-submit" class="btn btn-primary">Create account</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/shared.js"></script>
+  <script>
+    const authMessage = document.getElementById('auth-message');
+    const productsContainer = document.getElementById('product-grid');
+    const cartContainer = document.getElementById('cart-items');
+    const wishlistContainer = document.getElementById('wishlist-items');
+    const cartSummary = document.getElementById('cart-summary');
+    const couponInput = document.getElementById('coupon-code');
+    const couponFeedback = document.getElementById('coupon-feedback');
+    const applyCouponButton = document.getElementById('apply-coupon');
+    const checkoutButton = document.getElementById('checkout-cart');
+    const categoryButtons = document.querySelectorAll('#category-filter .pill');
+    const searchInput = document.getElementById('search-input');
+    const minPriceInput = document.getElementById('min-price');
+    const maxPriceInput = document.getElementById('max-price');
+    const productModal = document.getElementById('product-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalName = document.getElementById('modal-name');
+    const modalDescription = document.getElementById('modal-description');
+    const modalPrice = document.getElementById('modal-price');
+    const modalStock = document.getElementById('modal-stock');
+    const modalAddCart = document.getElementById('modal-add-cart');
+    const modalAddWishlist = document.getElementById('modal-add-wishlist');
+
+    let selectedProduct = null;
+    let activeCategory = 'All';
+    let categoryMap = {};
+    let categoryLookup = {};
+    let currentCoupon = '';
+    const modalReviewList = document.getElementById('modal-reviews');
+    const modalReviewSummary = document.getElementById('modal-review-summary');
+    const modalReviewRating = document.getElementById('modal-review-rating');
+    const modalReviewComment = document.getElementById('modal-review-comment');
+    const modalReviewSubmit = document.getElementById('modal-submit-review');
+    const modalReviewFeedback = document.getElementById('modal-review-feedback');
+
+    function deriveCategory(product) {
+      if (product.category_id && categoryLookup[product.category_id]) {
+        return categoryLookup[product.category_id];
+      }
+      const normalized = product.title.toLowerCase();
+      if (normalized.includes('shoe') || normalized.includes('fashion') || normalized.includes('shirt') || normalized.includes('jeans')) return 'Fashion';
+      if (normalized.includes('phone') || normalized.includes('laptop') || normalized.includes('camera') || normalized.includes('smart')) return 'Electronics';
+      if (normalized.includes('lamp') || normalized.includes('sofa') || normalized.includes('mug') || normalized.includes('desk')) return 'Home';
+      if (normalized.includes('bag') || normalized.includes('watch') || normalized.includes('belt') || normalized.includes('hat')) return 'Accessories';
+      return 'All';
+    }
+
+    function getImageUrl(product) {
+      return product.image && product.image.trim()
+        ? product.image
+        : 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80';
+    }
+
+    function createPanelItem(title, subtitle) {
+      const card = document.createElement('div');
+      card.className = 'panel-card';
+      card.innerHTML = `<strong>${title}</strong><span>${subtitle}</span>`;
+      return card;
+    }
+
+    function renderProducts(products) {
+      productsContainer.innerHTML = '';
+      if (!products.length) {
+        productsContainer.appendChild(createPanelItem('No products found', 'Try adjusting your filters or browse all categories.'));
+        return;
+      }
+      products.forEach(product => {
+        const card = document.createElement('article');
+        card.className = 'product-card';
+        const category = deriveCategory(product);
+        card.innerHTML = `
+          <div class="card-media">
+            <img src="${getImageUrl(product)}" alt="${product.title}" loading="lazy" />
+          </div>
+          <div class="card-body">
+            <div class="tag">${category}</div>
+            <h3>${product.title}</h3>
+            <p>${product.description || 'Premium product available from ShopEase.'}</p>
+            <div class="card-meta">
+              <span class="price">$${product.price.toFixed(2)}</span>
+              <small>${product.stock > 0 ? `${product.stock} in stock` : '<span style="color: var(--danger)">Out of stock</span>'}</small>
+            </div>
+            <div class="card-actions">
+              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" class="btn btn-primary btn-full add-cart" ${product.stock === 0 ? 'disabled' : ''}>
+                ${product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              </button>
+              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-image="${getImageUrl(product)}" data-stock="${product.stock}" class="btn btn-outline btn-full view-details">View Details</button>
+            </div>
+          </div>
+        `;
+        productsContainer.appendChild(card);
+      });
+    }
+
+    async function loadCategories() {
+      try {
+        const categories = await apiFetch('/categories');
+        categoryMap = {};
+        categoryLookup = {};
+        categories.forEach(cat => {
+          categoryMap[cat.name] = cat.id;
+          categoryLookup[cat.id] = cat.name;
+        });
+      } catch (error) {
+        console.warn('Could not load categories', error);
+      }
+    }
+
+    async function loadProducts() {
+      const name = searchInput.value.trim();
+      const minPrice = parseFloat(minPriceInput.value);
+      const maxPrice = parseFloat(maxPriceInput.value);
+
+      const params = new URLSearchParams();
+      if (name) params.set('search', name);
+      if (!Number.isNaN(minPrice)) params.set('min_price', minPrice);
+      if (!Number.isNaN(maxPrice)) params.set('max_price', maxPrice);
+      if (activeCategory !== 'All' && categoryMap[activeCategory]) {
+        params.set('category_id', categoryMap[activeCategory]);
+      }
+
+      const path = `/products/search?${params.toString()}`;
+      const products = await apiFetch(path);
+      renderProducts(products);
+    }
+
+    async function addToCart(productId) {
+      if (!state.token) {
+        showAuthMessage('Login first to use the cart.');
+        openAuthModal('login');
+        return;
+      }
+      try {
+        const result = await apiFetch('/cart/', {
+          method: 'POST',
+          body: { product_id: Number(productId), quantity: 1 }
+        });
+        showAuthMessage(result.message || 'Added product to cart.');
+        showToast('Added to cart!', 'success');
+        refreshCartCount();
+      } catch (error) {
+        showAuthMessage(error.detail || 'Unable to add item to cart.');
+        showToast('Failed to add to cart', 'error');
+      }
+    }
+
+    async function addToWishlist(productId) {
+      if (!state.token) {
+        showAuthMessage('Login first to use the wishlist.');
+        openAuthModal('login');
+        return;
+      }
+      try {
+        const result = await apiFetch('/wishlist/', {
+          method: 'POST',
+          body: { product_id: Number(productId) }
+        });
+        showAuthMessage(result.message || 'Added to wishlist.');
+        showToast('Added to wishlist!', 'success');
+      } catch (error) {
+        showAuthMessage(error.detail || 'Unable to add wishlist item.');
+        showToast('Failed to add to wishlist', 'error');
+      }
+    }
+
+    async function removeCartItem(cartId) {
+      try {
+        await apiFetch(`/cart/${cartId}`, { method: 'DELETE' });
+        showAuthMessage('Item removed from cart.');
+        showToast('Removed from cart', 'info');
+        await loadCart();
+      } catch (error) {
+        showAuthMessage(error.detail || 'Unable to remove item.');
+        showToast('Failed to remove item', 'error');
+      }
+    }
+
+    async function checkoutCart() {
+      if (!state.token) {
+        showAuthMessage('Login first to checkout.');
+        openAuthModal('login');
+        return;
+      }
+      try {
+        const result = await apiFetch('/cart/checkout', {
+          method: 'POST',
+          body: { coupon_code: couponInput.value.trim() || null }
+        });
+        showAuthMessage(result.message ? `${result.message} Total: $${Number(result.total_price).toFixed(2)}` : 'Checkout complete.');
+        showToast('Order placed successfully!', 'success');
+        couponFeedback.textContent = result.discount_amount ? `Discount applied: $${Number(result.discount_amount).toFixed(2)}` : 'No discount applied.';
+        couponInput.value = '';
+        currentCoupon = '';
+        await loadCart();
+      } catch (error) {
+        showAuthMessage(error.detail || 'Checkout failed.');
+        showToast('Checkout failed', 'error');
+      }
+    }
+
+    async function loadCart() {
+      if (!state.token) {
+        if (cartSummary) cartSummary.textContent = 'Sign in to view cart';
+        if (cartContainer) cartContainer.innerHTML = '';
+        if (checkoutButton) checkoutButton.disabled = true;
+        if (applyCouponButton) applyCouponButton.disabled = true;
+        return;
+      }
+      try {
+        const result = await apiFetch('/cart/');
+        if (cartContainer) cartContainer.innerHTML = '';
+        currentCoupon = couponInput.value.trim();
+        if (couponFeedback) couponFeedback.textContent = currentCoupon ? `Coupon '${currentCoupon}' ready to apply.` : 'Enter a coupon code and hit Apply.';
+        if (!result.length) {
+          if (cartSummary) cartSummary.textContent = '0 items · $0.00';
+          if (cartContainer) cartContainer.appendChild(createPanelItem('Your cart is empty', 'Add products to start shopping.'));
+          if (checkoutButton) checkoutButton.disabled = true;
+          if (applyCouponButton) applyCouponButton.disabled = false;
+          return;
+        }
+        const total = result.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+        const quantity = result.reduce((sum, item) => sum + item.quantity, 0);
+        if (cartSummary) cartSummary.textContent = `${quantity} item(s) · $${total.toFixed(2)}`;
+        if (checkoutButton) checkoutButton.disabled = false;
+        if (applyCouponButton) applyCouponButton.disabled = false;
+        result.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'panel-card';
+          card.innerHTML = `
+            <div>
+              <strong>${item.product_name}</strong>
+              <span>${item.quantity} × $${item.price.toFixed(2)}</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <button class="btn btn-sm btn-outline remove-cart" data-cart-id="${item.id}">Remove</button>
+            </div>
+          `;
+          if (cartContainer) cartContainer.appendChild(card);
+        });
+      } catch (error) {
+        if (cartSummary) cartSummary.textContent = error.detail || 'Unable to load cart.';
+      }
+    }
+
+    async function loadWishlist() {
+      if (!state.token) {
+        if (wishlistContainer) wishlistContainer.innerHTML = '';
+        return;
+      }
+      try {
+        const result = await apiFetch('/wishlist/');
+        if (wishlistContainer) wishlistContainer.innerHTML = '';
+        if (!result.length) {
+          if (wishlistContainer) wishlistContainer.appendChild(createPanelItem('Wishlist is empty', 'Save your favorite products here.'));
+          return;
+        }
+        result.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'panel-card';
+          card.innerHTML = `
+            <div>
+              <strong>${item.product_name}</strong>
+              <span>Saved to wishlist</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;">
+              <button class="btn btn-sm btn-primary move-to-cart" data-id="${item.id}">Move to Cart</button>
+              <button class="btn btn-sm btn-outline remove-wishlist" data-id="${item.id}">Remove</button>
+            </div>
+          `;
+          if (wishlistContainer) wishlistContainer.appendChild(card);
+        });
+      } catch (error) {
+        if (wishlistContainer) wishlistContainer.innerHTML = '';
+      }
+    }
+
+    async function moveWishlistItem(wishlistId) {
+      try {
+        const result = await apiFetch(`/wishlist/${wishlistId}/move-to-cart`, {
+          method: 'POST',
+          body: { quantity: 1 }
+        });
+        showAuthMessage(result.message || 'Moved wishlist item to cart.');
+        showToast('Moved to cart!', 'success');
+        await loadCart();
+        await loadWishlist();
+      } catch (error) {
+        showAuthMessage(error.detail || 'Unable to move wishlist item.');
+        showToast('Failed to move item', 'error');
+      }
+    }
+
+    async function removeWishlistItem(wishlistId) {
+      try {
+        const result = await apiFetch(`/wishlist/${wishlistId}`, { method: 'DELETE' });
+        showAuthMessage(result.message || 'Removed from wishlist.');
+        showToast('Removed from wishlist', 'info');
+        await loadWishlist();
+      } catch (error) {
+        showAuthMessage(error.detail || 'Unable to remove item.');
+        showToast('Failed to remove item', 'error');
+      }
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!username || !password) {
+        showAuthMessage('Please enter username and password.');
+        return;
+      }
+      try {
+        const result = await loginUser(username, password);
+        showAuthMessage(`Welcome back, ${result.user.username}!`);
+        showToast('Signed in successfully!', 'success');
+        closeAuthModal();
+        loadCart();
+        loadWishlist();
+      } catch (error) {
+        showAuthMessage(error.message || 'Login failed.');
+        showToast('Login failed', 'error');
+      }
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('reg-username').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      if (!username || !email || !password) {
+        showAuthMessage('Please fill in all fields.');
+        return;
+      }
+      try {
+        const result = await registerUser(username, email, password);
+        showAuthMessage(result.message || 'Account created! You can now sign in.');
+        showToast('Registration successful!', 'success');
+        document.getElementById('reg-username').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-password').value = '';
+      } catch (error) {
+        showAuthMessage(error.body?.detail || error.message || 'Registration failed.');
+        showToast('Registration failed', 'error');
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      ensureAuthMessage();
+      try {
+        await loadCategories();
+      } catch (e) {
+        console.warn('Categories load failed', e);
+      }
+      loadProducts();
+      loadCart();
+      loadWishlist();
+    });
+  </script>
 </body>
 </html>
+</parameter>
+</write_to_file>

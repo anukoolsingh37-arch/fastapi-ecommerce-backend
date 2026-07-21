@@ -29,6 +29,17 @@ def add_to_wishlist(
             detail="Product not found"
         )
 
+    existing_item = db.query(models.Wishlist).filter(
+        models.Wishlist.user == current_user["email"],
+        models.Wishlist.product_id == product.id
+    ).first()
+
+    if existing_item:
+        return {
+            "message": "Product is already in your wishlist",
+            "wishlist_item": existing_item
+        }
+
     new_item = models.Wishlist(
         product_id=product.id,
         product_name=product.title,
@@ -86,11 +97,38 @@ def move_wishlist_item_to_cart(
             detail="Product not found"
         )
 
+    if cart_data.quantity < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="Quantity must be at least 1"
+        )
+
     if product.stock < cart_data.quantity:
         raise HTTPException(
             status_code=400,
             detail="Not enough stock available"
         )
+
+    existing_cart_item = db.query(models.Cart).filter(
+        models.Cart.user_id == current_user["id"],
+        models.Cart.product_id == product.id
+    ).first()
+
+    if existing_cart_item:
+        if product.stock < existing_cart_item.quantity + cart_data.quantity:
+            raise HTTPException(
+                status_code=400,
+                detail="Not enough stock available"
+            )
+        existing_cart_item.quantity += cart_data.quantity
+        db.delete(wishlist_item)
+        db.commit()
+        db.refresh(existing_cart_item)
+
+        return {
+            "message": "Wishlist item moved to cart",
+            "cart_item": existing_cart_item
+        }
 
     new_cart_item = models.Cart(
         product_id=product.id,
@@ -109,7 +147,7 @@ def move_wishlist_item_to_cart(
     return {
         "message": "Wishlist item moved to cart",
         "cart_item": new_cart_item
-    }
+        }
 
 
 @router.delete("/{wishlist_id}")

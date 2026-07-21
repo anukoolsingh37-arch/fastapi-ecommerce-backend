@@ -8,31 +8,36 @@
 </head>
 <body>
   <div class="page-shell store-shell">
-    <header class="topbar">
-      <div class="brand">ShopEase</div>
-      <nav class="nav-links">
-        <a href="/store">Store</a>
-        <a href="/product?id=1">Sample Product</a>
-        <a href="/docs">API Docs</a>
-      </nav>
+    <header class="topbar no-print">
+      <div class="nav-container">
+        <div class="brand">ShopEase</div>
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+        <nav class="nav-links">
+          <a href="/store">Store</a>
+          <a href="/product?id=1">Sample Product</a>
+          <a href="/docs">API Docs</a>
+        </nav>
+      </div>
     </header>
 
     <main class="store-main">
       <section class="store-hero">
         <div class="hero-copy">
-          <span class="eyebrow">My orders</span>
+          <span class="eyebrow">✨ My orders</span>
           <h1>Track your orders and checkout your cart.</h1>
           <p>See your order history, preview your shopping cart, and complete checkout in one place.</p>
           <div class="hero-actions">
-            <button id="refresh-orders" class="btn btn-primary">Refresh Orders</button>
-            <button id="refresh-cart" class="btn btn-outline">Refresh Cart</button>
+            <button id="refresh-orders" class="btn btn-primary btn-lg">Refresh Orders</button>
+            <button id="refresh-cart" class="btn btn-outline btn-lg">Refresh Cart</button>
           </div>
           <div class="hero-highlights">
-            <div>
+            <div class="highlight-card">
+              <div class="highlight-icon">📦</div>
               <strong>Order history</strong>
               <p>Review all orders placed with your account.</p>
             </div>
-            <div>
+            <div class="highlight-card">
+              <div class="highlight-icon">💳</div>
               <strong>Cart checkout</strong>
               <p>Apply a coupon and place a single order from your cart.</p>
             </div>
@@ -42,7 +47,7 @@
         <aside class="auth-card">
           <div class="auth-header">
             <div>
-              <h2>Account</h2>
+              <h2>👤 Account</h2>
               <p>Login or register to manage your orders.</p>
             </div>
           </div>
@@ -73,8 +78,8 @@
         <div class="panel-sm">
           <div class="panel-header">
             <div>
-              <h3>Cart preview</h3>
-              <p>Items ready for checkout.</p>
+              <h3>🛒 Cart preview</h3>
+              <p class="panel-subtitle">Items ready for checkout.</p>
             </div>
           </div>
           <div class="panel-summary" id="cart-summary">Loading cart…</div>
@@ -88,7 +93,7 @@
         <div class="panel-sm">
           <div class="panel-header">
             <div>
-              <h3>Order history</h3>
+              <h3>📋 Order history</h3>
               <p>Your recent purchases.</p>
             </div>
           </div>
@@ -96,6 +101,49 @@
         </div>
       </section>
     </main>
+
+    <footer class="site-footer no-print">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>🛒 ShopEase</h3>
+          <p style="color: var(--text-muted); line-height: 1.6;">A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
+          <div class="social-links">
+            <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
+            <a href="#" class="social-link" aria-label="GitHub">⌨</a>
+            <a href="#" class="social-link" aria-label="Discord">💬</a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Shop</h3>
+          <ul>
+            <li><a href="/store">Browse Products</a></li>
+            <li><a href="/store#cart">Shopping Cart</a></li>
+            <li><a href="/store#wishlist">Wishlist</a></li>
+            <li><a href="/orders">Order History</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Account</h3>
+          <ul>
+            <li><a href="#" onclick="openAuthModal('login'); return false;">Sign In</a></li>
+            <li><a href="#" onclick="openAuthModal('register'); return false;">Create Account</a></li>
+            <li><a href="/orders">My Orders</a></li>
+            <li><a href="/admin">Admin Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Developer</h3>
+          <ul>
+            <li><a href="/docs">API Documentation</a></li>
+            <li><a href="https://github.com" target="_blank">GitHub Repository</a></li>
+            <li><a href="https://render.com" target="_blank">Render Hosting</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 ShopEase. Built with ❤️ using FastAPI + Modern CSS</p>
+      </div>
+    </footer>
   </div>
 
   <script src="/static/shared.js"></script>
@@ -183,8 +231,10 @@
         authMessage.textContent = `Signed in as ${result.user.username}`;
         renderCart();
         renderOrders();
+        showToast('Signed in successfully', 'success');
       } catch (error) {
         authMessage.textContent = error.detail || 'Login failed';
+        showToast('Login failed', 'error');
       }
     });
 
@@ -196,8 +246,10 @@
       try {
         const result = await registerUser(username, email, password);
         authMessage.textContent = result.message || 'Account created successfully.';
+        showToast('Registration successful!', 'success');
       } catch (error) {
         authMessage.textContent = error.detail || 'Registration failed';
+        showToast('Registration failed', 'error');
       }
     });
 
@@ -223,8 +275,10 @@
         authMessage.textContent = result.message || 'Order completed.';
         renderCart();
         renderOrders();
+        showToast('Order placed successfully!', 'success');
       } catch (error) {
         authMessage.textContent = error.detail || 'Unable to complete checkout.';
+        showToast('Checkout failed', 'error');
       }
     });
 
@@ -242,3 +296,17 @@
   </script>
 </body>
 </html>
+</parameter>
+<task_progress>
+- [x] Analyze existing frontend files (HTML, CSS, JS)
+- [x] Design a modern design system (CSS variables, typography, spacing)
+- [x] Improve Navigation & Footer
+- [x] Improve Hero section
+- [x] Improve Product cards & Product pages
+- [x] Improve Cart & Checkout
+- [x] Improve Search & Category pages
+- [x] Improve Profile, Dashboard, Orders, Wishlist
+- [ ] Improve Login & Register
+- [ ] Verify results
+</task_progress>
+</write_to_file>

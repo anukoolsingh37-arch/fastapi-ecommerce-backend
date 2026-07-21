@@ -417,37 +417,30 @@ def upload_image(
             detail="Admin privileges required"
         )
 
-    ext = os.path.splitext(file.filename)[1] if file.filename else ".jpg"
-    filename = f"{uuid.uuid4().hex}{ext}"
+    allowed_extensions = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+    max_upload_size = int(os.getenv("MAX_UPLOAD_SIZE", 5 * 1024 * 1024))
+
+    ext = os.path.splitext(file.filename)[1].lower() if file.filename else ""
+    if ext not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type. Allowed types: jpg, jpeg, png, gif, webp"
+        )
+
+    contents = file.file.read()
+    if len(contents) > max_upload_size:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File size exceeds the maximum allowed size of {max_upload_size} bytes"
+        )
+
+    filename = f"{uuid.uuid4().hex}{ext or '.jpg'}"
     filepath = os.path.join(UPLOAD_DIR, filename)
 
     with open(filepath, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        buffer.write(contents)
 
     return {
         "message": "Image uploaded successfully",
         "url": f"/static/uploads/{filename}"
-    }
-
-
-@router.get("/summary")
-def order_summary(
-    db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-
-    orders = db.query(models.Order).filter(
-        models.Order.customer == current_user["email"]
-    ).all()
-
-    total_orders = len(orders)
-
-    total_spent = sum(
-        order.total_price for order in orders
-    )
-
-    return {
-        "total_orders": total_orders,
-        "total_spent": total_spent,
-        "orders": orders
     }

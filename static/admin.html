@@ -8,44 +8,47 @@
 </head>
 <body>
   <div class="page-shell admin-shell">
-    <header class="topbar">
-      <div class="brand">ShopEase Admin</div>
-      <nav class="nav-links">
-        <a href="/store">Store</a>
-        <a href="/orders">Orders</a>
-        <a href="/docs">API Docs</a>
-        <button id="open-login" class="btn btn-sm btn-outline">Admin Sign In</button>
-        <button id="admin-logout" class="btn btn-sm btn-secondary" style="display:none;">Log Out</button>
-      </nav>
+    <header class="topbar no-print">
+      <div class="nav-container">
+        <div class="brand">ShopEase Admin</div>
+        <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+        <nav class="nav-links">
+          <a href="/store">Store</a>
+          <a href="/orders">Orders</a>
+          <a href="/docs">API Docs</a>
+          <button id="open-login" class="btn btn-sm btn-outline">Admin Sign In</button>
+          <button id="admin-logout" class="btn btn-sm btn-secondary" style="display:none;">Log Out</button>
+        </nav>
+      </div>
     </header>
 
     <main class="store-main">
       <section class="feature-row" style="grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 32px;">
-        <article>
-          <h3>Total orders</h3>
-          <p id="stat-orders">-</p>
+        <article class="admin-stat-card">
+          <h3>📊 Total orders</h3>
+          <p id="stat-orders" class="admin-stat-value">-</p>
         </article>
-        <article>
-          <h3>Total revenue</h3>
-          <p id="stat-revenue">-</p>
+        <article class="admin-stat-card">
+          <h3>💰 Total revenue</h3>
+          <p id="stat-revenue" class="admin-stat-value">-</p>
         </article>
-        <article>
-          <h3>Current user</h3>
-          <p id="stat-user">Not signed in</p>
+        <article class="admin-stat-card">
+          <h3>👤 Current user</h3>
+          <p id="stat-user" class="admin-stat-value">Not signed in</p>
         </article>
       </section>
 
       <section class="shop-section">
         <div class="section-heading">
           <div>
-            <h2>Sales summary</h2>
+            <h2>📈 Sales summary</h2>
             <p>Top selling products and admin actions.</p>
           </div>
           <button id="refresh-dashboard" class="btn btn-outline btn-sm">Refresh</button>
         </div>
 
         <div class="panel-sm" style="padding:24px;">
-          <h3>Best sellers</h3>
+          <h3>🏆 Best sellers</h3>
           <div id="best-sellers" class="panel-list"></div>
         </div>
       </section>
@@ -53,7 +56,7 @@
       <section class="shop-section">
         <div class="section-heading">
           <div>
-            <h2>Product management</h2>
+            <h2>📦 Product management</h2>
             <p>Edit stock levels and featured status in real time.</p>
           </div>
         </div>
@@ -63,13 +66,56 @@
       <section class="shop-section">
         <div class="section-heading">
           <div>
-            <h2>Order management</h2>
+            <h2>📋 Order management</h2>
             <p>View and update order statuses.</p>
           </div>
         </div>
         <div id="order-admin-table" class="admin-table"></div>
       </section>
     </main>
+
+    <footer class="site-footer no-print">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>🛒 ShopEase</h3>
+          <p style="color: var(--text-muted); line-height: 1.6;">A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
+          <div class="social-links">
+            <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
+            <a href="#" class="social-link" aria-label="GitHub">⌨</a>
+            <a href="#" class="social-link" aria-label="Discord">💬</a>
+          </div>
+        </div>
+        <div class="footer-section">
+          <h3>Shop</h3>
+          <ul>
+            <li><a href="/store">Browse Products</a></li>
+            <li><a href="/store#cart">Shopping Cart</a></li>
+            <li><a href="/store#wishlist">Wishlist</a></li>
+            <li><a href="/orders">Order History</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Account</h3>
+          <ul>
+            <li><a href="#" onclick="openAuthModal('login'); return false;">Sign In</a></li>
+            <li><a href="#" onclick="openAuthModal('register'); return false;">Create Account</a></li>
+            <li><a href="/orders">My Orders</a></li>
+            <li><a href="/admin">Admin Dashboard</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h3>Developer</h3>
+          <ul>
+            <li><a href="/docs">API Documentation</a></li>
+            <li><a href="https://github.com" target="_blank">GitHub Repository</a></li>
+            <li><a href="https://render.com" target="_blank">Render Hosting</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 ShopEase. Built with ❤️ using FastAPI + Modern CSS</p>
+      </div>
+    </footer>
   </div>
 
   <div id="auth-modal" class="modal hidden" aria-hidden="true">
@@ -102,3 +148,17 @@
   <script src="/static/admin.js"></script>
 </body>
 </html>
+</parameter>
+<task_progress>
+- [x] Analyze existing frontend files (HTML, CSS, JS)
+- [x] Design a modern design system (CSS variables, typography, spacing)
+- [x] Improve Navigation & Footer
+- [x] Improve Hero section
+- [x] Improve Product cards & Product pages
+- [x] Improve Cart & Checkout
+- [x] Improve Search & Category pages
+- [x] Improve Profile, Dashboard, Orders, Wishlist
+- [ ] Improve Login & Register
+- [ ] Verify results
+</task_progress>
+</write_to_file>

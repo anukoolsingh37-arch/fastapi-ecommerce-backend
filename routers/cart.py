@@ -7,6 +7,7 @@ import schemas
 
 from database import get_db
 from auth.oauth2 import get_current_user
+from .order_utils import create_order_from_items
 
 
 router = APIRouter(
@@ -31,11 +32,23 @@ def add_to_cart(
             detail="Product not found"
         )
 
-    if product.stock < cart.quantity:
+    if cart.quantity < 1:
         raise HTTPException(
             status_code=400,
-            detail="Not enough stock available"
+            detail="Quantity must be at least 1"
         )
+
+    existing_cart_item = db.query(models.Cart).filter(
+        models.Cart.user_id == current_user["id"],
+        models.Cart.product_id == product.id
+    ).first()
+
+    if existing_cart_item:
+        existing_cart_item.quantity += cart.quantity
+        db.commit()
+        return {
+            "message": "Product quantity updated in cart"
+        }
 
     new_cart = models.Cart(
         product_id=product.id,
@@ -134,92 +147,30 @@ def checkout_cart(
             detail="Cart is empty"
         )
 
-    total_price = 0.0
-    total_quantity = 0
-
+    items = []
     for item in cart_items:
         product = db.query(models.Product).filter(
             models.Product.id == item.product_id
         ).first()
 
-        if not product or product.stock < item.quantity:
+        if not product:
             raise HTTPException(
-                status_code=400,
-                detail=f"Insufficient stock for {item.product_name}"
+                status_code=404,
+                detail=f"Product {item.product_name} not found"
             )
 
-        total_price += item.price * item.quantity
-        total_quantity += item.quantity
+        items.append({
+            "product_id": item.product_id,
+            "quantity": item.quantity
+        })
 
-    discount_amount = 0.0
-    coupon_code = checkout.coupon_code
-
-    if coupon_code:
-        coupon = db.query(models.Coupon).filter(
-            models.Coupon.code == coupon_code,
-            models.Coupon.active == True
-        ).first()
-
-        if not coupon:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid coupon code"
-            )
-
-        if coupon.expires_at is not None and coupon.expires_at < datetime.utcnow():
-            raise HTTPException(
-                status_code=400,
-                detail="Coupon has expired"
-            )
-
-        if coupon.max_uses and coupon.used_count >= coupon.max_uses:
-            raise HTTPException(
-                status_code=400,
-                detail="Coupon usage limit reached"
-            )
-
-        discount_amount = total_price * (coupon.discount_percent / 100)
-        total_price = max(total_price - discount_amount, 0.0)
-        coupon.used_count += 1
-
-    new_order = models.Order(
-        total_price=total_price,
-        discount_amount=discount_amount,
-        coupon_code=coupon_code,
-        customer=current_user["email"],
-        customer_id=current_user["id"],
-        status="pending"
+    return create_order_from_items(
+        db=db,
+        current_user=current_user,
+        items=items,
+        coupon_code=checkout.coupon_code,
+        cart_items=cart_items
     )
-
-    db.add(new_order)
-    db.flush()
-
-    for item in cart_items:
-        product = db.query(models.Product).filter(
-            models.Product.id == item.product_id
-        ).first()
-        product.stock -= item.quantity
-
-        order_item = models.OrderItem(
-            order_id=new_order.id,
-            product_id=item.product_id,
-            product_name=item.product_name,
-            quantity=item.quantity,
-            price=item.price
-        )
-        db.add(order_item)
-        db.delete(item)
-
-    db.commit()
-    db.refresh(new_order)
-
-    return {
-        "message": "Checkout complete",
-        "order_id": new_order.id,
-        "total_price": total_price,
-        "discount_amount": discount_amount,
-        "items": len(cart_items)
-    }
 
 
 @router.delete("/{cart_id}")
