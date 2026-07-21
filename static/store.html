@@ -8,20 +8,23 @@
 </head>
 <body>
   <div class="page-shell store-shell">
-    <header class="topbar no-print">
-      <div class="nav-container">
-        <div class="brand">ShopEase</div>
-        <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
-        <nav class="nav-links">
-          <a href="#shop">Shop</a>
-          <a href="#cart">Cart</a>
-          <a href="#wishlist">Wishlist</a>
-          <a href="/orders">Orders</a>
-          <a href="/admin">Admin</a>
-          <a href="/docs">API Docs</a>
-        </nav>
-      </div>
-    </header>
+      <header class="topbar no-print">
+        <div class="nav-container">
+          <a href="/" class="brand">ShopEase</a>
+          <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
+          <nav class="nav-links">
+            <a href="#shop" class="nav-link">Shop</a>
+            <a href="#cart" class="nav-link">Cart</a>
+            <a href="#wishlist" class="nav-link">Wishlist</a>
+            <a href="/orders" class="nav-link">Orders</a>
+            <a href="/admin" class="nav-link-muted">Admin</a>
+            <a href="/docs" class="nav-link-muted">API</a>
+            <button id="cart-button" class="cart-btn" aria-label="Open cart">
+              Cart <span id="cart-count" class="cart-badge">0</span>
+            </button>
+          </nav>
+        </div>
+      </header>
 
     <main class="store-main">
       <section class="store-hero">
@@ -54,30 +57,32 @@
 
         <aside class="auth-card">
           <div class="auth-header">
-            <div>
-              <h2>👤 Member access</h2>
-              <p>Log in to unlock cart and wishlist actions with your FastAPI session.</p>
-            </div>
+            <h2>Member access</h2>
+            <p>Sign in to unlock cart, wishlist, and orders.</p>
+          </div>
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Sign In</button>
+            <button class="auth-tab" data-tab="register">Create Account</button>
           </div>
           <div class="auth-forms">
             <form id="login-form" class="form-sm">
-              <label>Username</label>
+              <label>Username or email</label>
               <input id="login-username" type="text" placeholder="john" required />
               <label>Password</label>
-              <input id="login-password" type="password" placeholder="password" required />
+              <input id="login-password" type="password" placeholder="••••••••" required />
               <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
             </form>
-            <form id="register-form" class="form-sm">
+            <form id="register-form" class="form-sm" style="display:none;">
               <label>Username</label>
               <input id="register-username" type="text" placeholder="jane" required />
               <label>Email</label>
               <input id="register-email" type="email" placeholder="jane@example.com" required />
               <label>Password</label>
-              <input id="register-password" type="password" placeholder="password" required />
-              <button type="submit" class="btn btn-outline btn-sm">Create Account</button>
+              <input id="register-password" type="password" placeholder="••••••••" required />
+              <button type="submit" class="btn btn-amber btn-sm">Create Account</button>
             </form>
           </div>
-          <div id="auth-message" class="auth-message">Login to enable cart and wishlist actions.</div>
+          <div id="auth-message" class="auth-message">Sign in to unlock cart, wishlist, and orders.</div>
         </aside>
       </section>
 

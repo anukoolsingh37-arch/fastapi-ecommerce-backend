@@ -10,12 +10,18 @@
   <div class="page-shell store-shell">
     <header class="topbar no-print">
       <div class="nav-container">
-        <div class="brand">ShopEase</div>
+        <a href="/" class="brand">ShopEase</a>
         <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
         <nav class="nav-links">
-          <a href="/store">Store</a>
-          <a href="/product?id=1">Sample Product</a>
-          <a href="/docs">API Docs</a>
+          <a href="/store" class="nav-link">Shop</a>
+          <a href="/orders" class="nav-link">Orders</a>
+          <a href="/store#cart" class="nav-link">Cart</a>
+          <a href="/store#wishlist" class="nav-link">Wishlist</a>
+          <a href="/admin" class="nav-link-muted">Admin</a>
+          <a href="/docs" class="nav-link-muted">API</a>
+          <button id="cart-button" class="cart-btn" aria-label="Open cart">
+            Cart <span id="cart-count" class="cart-badge">0</span>
+          </button>
         </nav>
       </div>
     </header>
@@ -23,7 +29,7 @@
     <main class="store-main">
       <section class="store-hero">
         <div class="hero-copy">
-          <span class="eyebrow">✨ My orders</span>
+          <span class="eyebrow">✦ Orders</span>
           <h1>Track your orders and checkout your cart.</h1>
           <p>See your order history, preview your shopping cart, and complete checkout in one place.</p>
           <div class="hero-actions">
@@ -32,12 +38,12 @@
           </div>
           <div class="hero-highlights">
             <div class="highlight-card">
-              <div class="highlight-icon">📦</div>
+              <span class="tag-label">History</span>
               <strong>Order history</strong>
               <p>Review all orders placed with your account.</p>
             </div>
             <div class="highlight-card">
-              <div class="highlight-icon">💳</div>
+              <span class="tag-label">Checkout</span>
               <strong>Cart checkout</strong>
               <p>Apply a coupon and place a single order from your cart.</p>
             </div>
@@ -46,55 +52,64 @@
 
         <aside class="auth-card">
           <div class="auth-header">
-            <div>
-              <h2>👤 Account</h2>
-              <p>Login or register to manage your orders.</p>
-            </div>
+            <h2>Account</h2>
+            <p>Login or register to manage your orders.</p>
+          </div>
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Sign In</button>
+            <button class="auth-tab" data-tab="register">Create Account</button>
           </div>
           <div class="auth-forms">
             <form id="login-form" class="form-sm">
-              <label>Username</label>
+              <label>Username or email</label>
               <input id="login-username" type="text" placeholder="demo" required />
               <label>Password</label>
               <input id="login-password" type="password" placeholder="demopass" required />
               <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
             </form>
-            <form id="register-form" class="form-sm">
+            <form id="register-form" class="form-sm" style="display:none;">
               <label>Username</label>
               <input id="register-username" type="text" placeholder="newuser" required />
               <label>Email</label>
               <input id="register-email" type="email" placeholder="you@example.com" required />
               <label>Password</label>
-              <input id="register-password" type="password" placeholder="password" required />
-              <button type="submit" class="btn btn-outline btn-sm">Sign Up</button>
+              <input id="register-password" type="password" placeholder="••••••••" required />
+              <button type="submit" class="btn btn-amber btn-sm">Create Account</button>
             </form>
           </div>
-          <div id="auth-message" class="auth-message"></div>
-          <button id="logout-button" class="btn btn-secondary btn-sm">Log Out</button>
+          <div id="auth-message" class="auth-message">Sign in to manage your orders.</div>
+          <button id="logout-button" class="btn btn-ghost btn-sm" style="margin-top:12px;">Log Out</button>
         </aside>
       </section>
+
+      <!-- Perforated Divider -->
+      <div class="perforated-divider">
+        <span class="divider-hole"></span>
+        <span class="divider-hole"></span>
+        <span class="divider-hole"></span>
+      </div>
 
       <section class="mini-panels">
         <div class="panel-sm">
           <div class="panel-header">
             <div>
-              <h3>🛒 Cart preview</h3>
+              <h3>Cart preview</h3>
               <p class="panel-subtitle">Items ready for checkout.</p>
             </div>
           </div>
           <div class="panel-summary" id="cart-summary">Loading cart…</div>
           <div id="cart-items" class="panel-list"></div>
           <div style="margin-top: 18px; display: grid; gap: 12px;">
-            <input id="coupon-code" type="text" placeholder="Coupon code" style="width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid #cbd5e1;" />
-            <button id="checkout-button" class="btn btn-primary btn-full">Checkout Cart</button>
+            <input id="coupon-code" type="text" placeholder="Coupon code" class="input-field" />
+            <button id="checkout-button" class="btn btn-amber btn-full">Checkout Cart</button>
           </div>
         </div>
 
         <div class="panel-sm">
           <div class="panel-header">
             <div>
-              <h3>📋 Order history</h3>
-              <p>Your recent purchases.</p>
+              <h3>Order history</h3>
+              <p class="panel-subtitle">Your recent purchases.</p>
             </div>
           </div>
           <div id="orders-list" class="panel-list"></div>
@@ -105,8 +120,8 @@
     <footer class="site-footer no-print">
       <div class="footer-content">
         <div class="footer-section">
-          <h3>🛒 ShopEase</h3>
-          <p style="color: var(--text-muted); line-height: 1.6;">A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
+          <h3>ShopEase</h3>
+          <p>A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
           <div class="social-links">
             <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
             <a href="#" class="social-link" aria-label="GitHub">⌨</a>
@@ -141,7 +156,7 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2025 ShopEase. Built with ❤️ using FastAPI + Modern CSS</p>
+        <p>&copy; 2025 ShopEase. Built with FastAPI + the Swing Tag design.</p>
       </div>
     </footer>
   </div>
@@ -207,11 +222,11 @@
           card.className = 'panel-card';
           card.innerHTML = `
             <div>
-              <strong>Order #${order.id} • ${order.status}</strong>
+              <strong>Order #${order.id} <span class="status-badge status-${order.status}">${order.status}</span></strong>
               <span>${itemsList} • $${order.total_price.toFixed(2)}</span>
             </div>
             <div style="display:flex;gap:8px;flex-shrink:0;">
-              <button class="btn btn-sm btn-outline view-order-shipments" data-order-id="${order.id}">📦 Track</button>
+              <button class="btn btn-sm btn-outline view-order-shipments" data-order-id="${order.id}">Track</button>
             </div>
           `;
           ordersList.appendChild(card);
@@ -220,6 +235,24 @@
         ordersList.innerHTML = '';
         ordersList.appendChild(createPanelItem('Unable to load orders', error.detail || 'Try again later.'));
       }
+    }
+
+    // Auth tab switching
+    function initAuthTabs() {
+      const container = document.querySelector('.auth-card');
+      if (!container) return;
+      const tabs = container.querySelectorAll('.auth-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const target = tab.dataset.tab;
+          const loginF = container.querySelector('#login-form');
+          const registerF = container.querySelector('#register-form');
+          if (loginF) loginF.style.display = target === 'login' ? 'flex' : 'none';
+          if (registerF) registerF.style.display = target === 'register' ? 'flex' : 'none';
+        });
+      });
     }
 
     loginForm.addEventListener('submit', async event => {
@@ -290,23 +323,10 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       ensureAuthMessage();
+      initAuthTabs();
       renderCart();
       renderOrders();
     });
   </script>
 </body>
 </html>
-</parameter>
-<task_progress>
-- [x] Analyze existing frontend files (HTML, CSS, JS)
-- [x] Design a modern design system (CSS variables, typography, spacing)
-- [x] Improve Navigation & Footer
-- [x] Improve Hero section
-- [x] Improve Product cards & Product pages
-- [x] Improve Cart & Checkout
-- [x] Improve Search & Category pages
-- [x] Improve Profile, Dashboard, Orders, Wishlist
-- [ ] Improve Login & Register
-- [ ] Verify results
-</task_progress>
-</write_to_file>

@@ -182,10 +182,22 @@ function openAuthModal(mode = 'login') {
   modal.setAttribute('aria-hidden', 'false');
   const title = document.getElementById('auth-title');
   if (title) title.textContent = mode === 'login' ? 'Sign in' : 'Create account';
-  const loginForm = document.getElementById('login-form');
-  const registerForm = document.getElementById('register-form');
-  if (loginForm) loginForm.style.display = mode === 'login' ? 'block' : 'none';
-  if (registerForm) registerForm.style.display = mode === 'register' ? 'block' : 'none';
+  
+  // Update tabs
+  const tabs = modal.querySelectorAll('.auth-tab');
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === mode));
+  
+  // Toggle forms
+  const loginForm = modal.querySelector('#modal-login-form');
+  const registerForm = modal.querySelector('#modal-register-form');
+  if (loginForm) loginForm.style.display = mode === 'login' ? 'flex' : 'none';
+  if (registerForm) registerForm.style.display = mode === 'register' ? 'flex' : 'none';
+  
+  // Also handle legacy form IDs if present
+  const legacyLogin = modal.querySelector('#login-form');
+  const legacyRegister = modal.querySelector('#register-form');
+  if (legacyLogin && !loginForm) legacyLogin.style.display = mode === 'login' ? 'flex' : 'none';
+  if (legacyRegister && !registerForm) legacyRegister.style.display = mode === 'register' ? 'flex' : 'none';
 }
 
 function closeAuthModal() {
@@ -479,10 +491,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Auth modal bindings
   document.querySelectorAll('.modal-close').forEach(btn => btn.addEventListener('click', closeAuthModal));
+  document.querySelectorAll('.modal-backdrop').forEach(btn => btn.addEventListener('click', closeAuthModal));
+  
+  // Legacy button bindings
   document.getElementById('show-register')?.addEventListener('click', (e) => { e.preventDefault(); openAuthModal('register'); });
   document.getElementById('show-login')?.addEventListener('click', (e) => { e.preventDefault(); openAuthModal('login'); });
   document.getElementById('login-submit')?.addEventListener('click', (e) => { e.preventDefault(); handleLogin(); });
   document.getElementById('register-submit')?.addEventListener('click', (e) => { e.preventDefault(); handleRegister(); });
+  
+  // Tab switching in auth modals
+  document.querySelectorAll('#auth-modal .auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const modal = document.getElementById('auth-modal');
+      modal.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const target = tab.dataset.tab;
+      const loginForm = modal.querySelector('#modal-login-form');
+      const registerForm = modal.querySelector('#modal-register-form');
+      if (loginForm) loginForm.style.display = target === 'login' ? 'flex' : 'none';
+      if (registerForm) registerForm.style.display = target === 'register' ? 'flex' : 'none';
+    });
+  });
 
   // Cart button
   document.getElementById('cart-button')?.addEventListener('click', showCartModal);

@@ -1,11 +1,14 @@
-# Full Project Improvements Plan
+# ShopEase "Swing Tag" Redesign — Progress
 
-- [x] Review all project files and understand current state
-- [x] **Fix #1**: Order history bug - `orders.html` references `order.product_name` but orders have `items[]` array
-- [x] **Fix #2**: Wishlist move-to-cart double stock deduction in `wishlist.py`
-- [x] **Feature A**: Add product reviews UI to the store page (modal + product grid)
-- [x] **Feature B**: Add shipment tracking timeline modal to admin orders page
-- [x] **Feature C**: Add shipment tracking modal to orders page for customers
-- [x] **Improvement D**: Better admin login flow with logout button
-- [x] **Improvement E**: Polish UI/UX - loading states, error handling, toast messages
-- [ ] **Verify**: Run the server and test all features
+## Build Order
+- [x] 1. Inspect existing codebase/stack
+- [x] 2. Set up color, type, and spacing tokens as CSS variables + Google Fonts
+- [x] 3. Fix Member Access tab bug (tabbed Sign In / Create account)
+- [x] 4. Move wishlist error out of login card into real Wishlist empty/error state
+- [x] 5. Build swing-tag card component (product cards, cart items, wishlist items)
+- [x] 6. Restyle header, hero, and feature row
+- [x] 7. Add perforated divider and barcode-strip accents
+- [x] 8. Pass on responsiveness, focus states, and reduced-motion
+- [x] 9. Update store.html, product.html, orders.html, admin.html with new design
+- [x] 10. Update shared.js for tabbed auth modal
+- [ ] 11. Commit and push to GitHub

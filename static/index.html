@@ -3,15 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ShopEase | FastAPI Ecommerce</title>
+  <title>ShopEase — The Swing Tag</title>
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <div class="page-shell landing-shell">
+    <!-- ===== Navigation ===== -->
     <header class="topbar no-print">
       <div class="nav-container">
         <div style="display:flex;align-items:center;gap:18px;flex:1;">
-          <div class="brand">ShopEase</div>
+          <a href="/" class="brand">ShopEase</a>
           <div class="search-wrap">
             <input id="site-search" type="search" placeholder="Search products, categories, prices..." />
           </div>
@@ -20,12 +21,13 @@
         <button id="mobile-menu-toggle" class="mobile-menu-toggle" aria-label="Toggle menu">☰</button>
 
         <nav class="nav-links">
-          <a href="/store">Store</a>
-          <a href="/orders">Orders</a>
-          <a href="/admin">Admin</a>
-          <a href="/docs">API Docs</a>
-          <a href="#features">Features</a>
-          <button id="cart-button" class="btn btn-sm cart-btn" aria-label="Open cart">
+          <a href="/store" class="nav-link">Shop</a>
+          <a href="/orders" class="nav-link">Orders</a>
+          <a href="#cart" class="nav-link" id="cart-nav-link">Cart</a>
+          <a href="#wishlist" class="nav-link">Wishlist</a>
+          <a href="/admin" class="nav-link-muted">Admin</a>
+          <a href="/docs" class="nav-link-muted">API</a>
+          <button id="cart-button" class="cart-btn" aria-label="Open cart">
             Cart <span id="cart-count" class="cart-badge">0</span>
           </button>
         </nav>
@@ -33,66 +35,84 @@
     </header>
 
     <main class="landing-main">
+      <!-- ===== Hero ===== -->
       <section class="landing-hero">
         <div class="hero-copy">
-          <span class="eyebrow">✨ API-powered storefront</span>
-          <h1>Launch a beautiful ecommerce experience on Render with FastAPI.</h1>
-          <p>Keep the backend API intact while giving customers a dedicated store, product discovery, cart management, and checkout preview.</p>
+          <span class="eyebrow">✦ FastAPI storefront</span>
+          <h1>Browse products. Save favorites. Check out with confidence.</h1>
+          <p>Search, filter, and discover products across categories. Add to cart or save for later — all powered by your FastAPI backend.</p>
           <div class="hero-actions">
             <a href="/store" class="btn btn-primary btn-lg">Open Store →</a>
-            <a href="/docs" class="btn btn-outline btn-lg">Explore API Docs</a>
+            <a href="#features" class="btn btn-outline btn-lg">See Features</a>
           </div>
           <div class="hero-highlights">
             <div class="highlight-card">
-              <div class="highlight-icon">🛍️</div>
-              <strong>Polished storefront</strong>
-              <p>A clean shopping experience that works across mobile and desktop.</p>
+              <span class="tag-label">Browse</span>
+              <strong>Fast search & filter</strong>
+              <p>Find products by name, category, or price range in seconds.</p>
             </div>
             <div class="highlight-card">
-              <div class="highlight-icon">⚡</div>
-              <strong>FastAPI backend</strong>
-              <p>API routes remain available for integrations, docs, and automation.</p>
+              <span class="tag-label">Preview</span>
+              <strong>Detail preview</strong>
+              <p>Open products in a clean modal with reviews and ratings.</p>
             </div>
             <div class="highlight-card">
-              <div class="highlight-icon">🚀</div>
-              <strong>Render-ready</strong>
-              <p>Deployed live with a modern UI and complete API accessibility.</p>
+              <span class="tag-label">Cart</span>
+              <strong>Cart snapshot</strong>
+              <p>See order totals and apply coupons without leaving the page.</p>
             </div>
           </div>
         </div>
 
-        <aside class="stats-card">
-          <div class="stat-pill">🌟 Live on Render</div>
-          <div class="stat-block">
-            <strong>Modern ecommerce UI</strong>
-            <p>Browse products, filter instantly, and manage cart items with ease.</p>
+        <!-- ===== Member Access Card (Tabbed) ===== -->
+        <aside class="auth-card">
+          <div class="auth-header">
+            <h2>Member access</h2>
+            <p>Sign in to unlock cart, wishlist, and orders.</p>
           </div>
-          <div class="feature-list">
-            <div class="feature-item">
-              <h3>🔍 Fast search</h3>
-              <p>Find items by name, category, or price range.</p>
-            </div>
-            <div class="feature-item">
-              <h3>❤️ Wishlist flow</h3>
-              <p>Save favorites to review later and keep shopping momentum.</p>
-            </div>
-            <div class="feature-item">
-              <h3>💻 Developer friendly</h3>
-              <p>Use `/docs` for API testing and integration preview.</p>
-            </div>
+          <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Sign In</button>
+            <button class="auth-tab" data-tab="register">Create Account</button>
           </div>
+          <div class="auth-forms">
+            <form id="login-form" class="form-sm">
+              <label>Username or email</label>
+              <input id="login-username" type="text" placeholder="john" required />
+              <label>Password</label>
+              <input id="login-password" type="password" placeholder="••••••••" required />
+              <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
+            </form>
+            <form id="register-form" class="form-sm" style="display:none;">
+              <label>Username</label>
+              <input id="reg-username" type="text" placeholder="jane" required />
+              <label>Email</label>
+              <input id="reg-email" type="email" placeholder="jane@example.com" required />
+              <label>Password</label>
+              <input id="reg-password" type="password" placeholder="••••••••" required />
+              <button type="submit" class="btn btn-amber btn-sm">Create Account</button>
+            </form>
+          </div>
+          <div id="auth-message" class="auth-message">Sign in to access cart, wishlist, and orders.</div>
         </aside>
       </section>
 
+      <!-- ===== Perforated Divider ===== -->
+      <div class="perforated-divider">
+        <span class="divider-hole"></span>
+        <span class="divider-hole"></span>
+        <span class="divider-hole"></span>
+      </div>
+
+      <!-- ===== Featured Products ===== -->
       <section class="shop-section">
         <div class="section-heading">
           <div>
             <h2>Featured products</h2>
-            <p> Discover our handpicked selection of premium products</p>
+            <p>Handpicked selection from our catalog</p>
           </div>
           <div style="display:flex;gap:12px;align-items:center;">
             <select id="sort-select" class="pill">
-              <option value="default">Sort by: Featured</option>
+              <option value="default">Sort: Featured</option>
               <option value="price_asc">Price: Low → High</option>
               <option value="price_desc">Price: High → Low</option>
               <option value="name_asc">Name: A → Z</option>
@@ -102,24 +122,24 @@
 
         <div class="filter-panel">
           <div class="filter-group">
-            <label>📂 Category</label>
+            <label>Category</label>
             <div id="category-pills" class="pill-group"></div>
           </div>
           <div class="filter-group inline-group">
             <div>
-              <label>💰 Min price</label>
+              <label>Min price</label>
               <input id="min-price" type="number" placeholder="0" />
             </div>
             <div>
-              <label>💰 Max price</label>
+              <label>Max price</label>
               <input id="max-price" type="number" placeholder="9999" />
             </div>
           </div>
           <div class="filter-group">
             <label>&nbsp;</label>
             <div style="display:flex;gap:8px;">
-              <button id="apply-filters" class="btn btn-sm btn-primary">Apply Filters</button>
-              <button id="clear-filters" class="btn btn-sm btn-outline">Clear</button>
+              <button id="apply-filters" class="btn btn-sm btn-primary">Apply</button>
+              <button id="clear-filters" class="btn btn-sm btn-ghost">Clear</button>
             </div>
           </div>
         </div>
@@ -127,30 +147,39 @@
         <div id="product-grid" class="product-grid"></div>
       </section>
 
+      <!-- ===== Perforated Divider ===== -->
+      <div class="perforated-divider">
+        <span class="divider-hole"></span>
+        <span class="divider-hole"></span>
+        <span class="divider-hole"></span>
+      </div>
+
+      <!-- ===== Feature Row ===== -->
       <section id="features" class="feature-row">
         <article class="feature-card">
-          <div class="feature-icon-large">🎯</div>
+          <span class="tag-label" style="display:block;text-align:center;margin-bottom:8px;">Discover</span>
           <h3>Designed for real product discovery</h3>
-          <p>Build a storefront that feels polished without touching your backend code.</p>
+          <p>A storefront that feels polished without touching your backend code.</p>
         </article>
         <article class="feature-card">
-          <div class="feature-icon-large">📱</div>
+          <span class="tag-label" style="display:block;text-align:center;margin-bottom:8px;">Responsive</span>
           <h3>Responsive and fast</h3>
-          <p>Every page adapts to mobile screens, with fast load times and a bright, modern look.</p>
+          <p>Every page adapts to mobile screens, with fast load times and a clean layout.</p>
         </article>
         <article class="feature-card">
-          <div class="feature-icon-large">🔗</div>
+          <span class="tag-label" style="display:block;text-align:center;margin-bottom:8px;">API</span>
           <h3>Store + API together</h3>
-          <p>The store is the customer-facing frontend, while `/docs` stays available for backend development.</p>
+          <p>The store is the customer-facing frontend, while <code style="font-family:var(--font-mono);font-size:0.8rem;">/docs</code> stays available for backend development.</p>
         </article>
       </section>
     </main>
 
+    <!-- ===== Footer ===== -->
     <footer class="site-footer no-print">
       <div class="footer-content">
         <div class="footer-section">
-          <h3>🛒 ShopEase</h3>
-          <p style="color: var(--text-muted); line-height: 1.6;">A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
+          <h3>ShopEase</h3>
+          <p>A modern ecommerce platform built with FastAPI, designed for seamless shopping experiences.</p>
           <div class="social-links">
             <a href="#" class="social-link" aria-label="Twitter">𝕏</a>
             <a href="#" class="social-link" aria-label="GitHub">⌨</a>
@@ -161,8 +190,8 @@
           <h3>Shop</h3>
           <ul>
             <li><a href="/store">Browse Products</a></li>
-            <li><a href="/store#cart">Shopping Cart</a></li>
-            <li><a href="/store#wishlist">Wishlist</a></li>
+            <li><a href="#cart">Shopping Cart</a></li>
+            <li><a href="#wishlist">Wishlist</a></li>
             <li><a href="/orders">Order History</a></li>
           </ul>
         </div>
@@ -185,54 +214,51 @@
         </div>
       </div>
       <div class="footer-bottom">
-        <p>&copy; 2025 ShopEase. Built with ❤️ using FastAPI + Modern CSS</p>
+        <p>&copy; 2025 ShopEase. Built with FastAPI + the Swing Tag design.</p>
       </div>
     </footer>
   </div>
 
+  <!-- ===== Auth Modal (for footer links) ===== -->
   <div id="auth-modal" class="modal hidden" aria-hidden="true">
     <div class="modal-backdrop"></div>
-    <div class="modal-content">
+    <div class="modal-content" style="max-width:420px;">
       <button class="modal-close">×</button>
-      <div style="display:grid;grid-template-columns:1fr;gap:18px;padding:28px;min-width:320px;">
-        <div class="auth-card">
-          <div class="auth-header">
-            <h2 id="auth-title">Sign in</h2>
-            <p id="auth-message">Login to access cart, wishlist, and orders.</p>
-          </div>
-          <div id="auth-forms" class="auth-forms">
-            <div id="login-form" class="form-sm">
-              <label>Username or email</label>
-              <input id="login-username" />
-              <label>Password</label>
-              <input id="login-password" type="password" />
-              <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button id="show-register" class="btn btn-outline">Create Account</button>
-                <button id="login-submit" class="btn btn-primary">Sign in</button>
-              </div>
-            </div>
-
-            <div id="register-form" class="form-sm" style="display:none;">
-              <label>Username</label>
-              <input id="reg-username" />
-              <label>Email</label>
-              <input id="reg-email" />
-              <label>Password</label>
-              <input id="reg-password" type="password" />
-              <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button id="show-login" class="btn btn-outline">Back to Login</button>
-                <button id="register-submit" class="btn btn-primary">Create account</button>
-              </div>
-            </div>
-          </div>
+      <div style="padding:28px;">
+        <div class="auth-header">
+          <h2 id="auth-title">Sign in</h2>
+          <p id="auth-message-modal">Login to access cart, wishlist, and orders.</p>
         </div>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Sign In</button>
+          <button class="auth-tab" data-tab="register">Create Account</button>
+        </div>
+        <div class="auth-forms">
+          <form id="modal-login-form" class="form-sm">
+            <label>Username or email</label>
+            <input id="modal-login-username" type="text" placeholder="john" required />
+            <label>Password</label>
+            <input id="modal-login-password" type="password" placeholder="••••••••" required />
+            <button type="submit" class="btn btn-primary btn-sm">Sign In</button>
+          </form>
+          <form id="modal-register-form" class="form-sm" style="display:none;">
+            <label>Username</label>
+            <input id="modal-reg-username" type="text" placeholder="jane" required />
+            <label>Email</label>
+            <input id="modal-reg-email" type="email" placeholder="jane@example.com" required />
+            <label>Password</label>
+            <input id="modal-reg-password" type="password" placeholder="••••••••" required />
+            <button type="submit" class="btn btn-amber btn-sm">Create Account</button>
+          </form>
+        </div>
+        <div id="modal-auth-feedback" class="auth-message">Sign in to access cart, wishlist, and orders.</div>
       </div>
     </div>
   </div>
 
   <script src="/static/shared.js"></script>
   <script>
-    const authMessage = document.getElementById('auth-message');
+    // ===== Page-specific state =====
     const productsContainer = document.getElementById('product-grid');
     const cartContainer = document.getElementById('cart-items');
     const wishlistContainer = document.getElementById('wishlist-items');
@@ -241,8 +267,7 @@
     const couponFeedback = document.getElementById('coupon-feedback');
     const applyCouponButton = document.getElementById('apply-coupon');
     const checkoutButton = document.getElementById('checkout-cart');
-    const categoryButtons = document.querySelectorAll('#category-filter .pill');
-    const searchInput = document.getElementById('search-input');
+    const searchInput = document.getElementById('site-search');
     const minPriceInput = document.getElementById('min-price');
     const maxPriceInput = document.getElementById('max-price');
     const productModal = document.getElementById('product-modal');
@@ -287,37 +312,47 @@
     function createPanelItem(title, subtitle) {
       const card = document.createElement('div');
       card.className = 'panel-card';
-      card.innerHTML = `<strong>${title}</strong><span>${subtitle}</span>`;
+      card.innerHTML = `<div><strong>${title}</strong><span>${subtitle}</span></div>`;
       return card;
     }
 
     function renderProducts(products) {
       productsContainer.innerHTML = '';
       if (!products.length) {
-        productsContainer.appendChild(createPanelItem('No products found', 'Try adjusting your filters or browse all categories.'));
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.setAttribute('data-icon', '🔍');
+        empty.innerHTML = `<div class="empty-state-title">No products found</div>
+          <div class="empty-state-description">Try adjusting your filters or browse all categories.</div>
+          <button class="btn btn-sm btn-outline" onclick="document.getElementById('clear-filters').click()">Clear Filters</button>`;
+        productsContainer.appendChild(empty);
         return;
       }
       products.forEach(product => {
         const card = document.createElement('article');
         card.className = 'product-card';
         const category = deriveCategory(product);
+        const isDiscounted = product.discount_price && product.discount_price < product.price;
+        const displayPrice = isDiscounted ? product.discount_price : product.price;
         card.innerHTML = `
           <div class="card-media">
             <img src="${getImageUrl(product)}" alt="${product.title}" loading="lazy" />
+            ${isDiscounted ? '<span class="swing-tag-badge sale" style="position:absolute;top:12px;right:12px;z-index:3;">SALE</span>' : ''}
           </div>
           <div class="card-body">
             <div class="tag">${category}</div>
             <h3>${product.title}</h3>
-            <p>${product.description || 'Premium product available from ShopEase.'}</p>
+            <p class="product-desc">${product.description || 'Premium product available from ShopEase.'}</p>
             <div class="card-meta">
-              <span class="price">$${product.price.toFixed(2)}</span>
-              <small>${product.stock > 0 ? `${product.stock} in stock` : '<span style="color: var(--danger)">Out of stock</span>'}</small>
+              <span class="price">$${displayPrice.toFixed(2)}</span>
+              <span class="stock-info">${product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}</span>
             </div>
             <div class="card-actions">
-              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" class="btn btn-primary btn-full add-cart" ${product.stock === 0 ? 'disabled' : ''}>
+              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" class="btn btn-primary btn-sm add-cart" ${product.stock === 0 ? 'disabled' : ''}>
                 ${product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
               </button>
-              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" data-description="${product.description || 'Premium product available from ShopEase.'}" data-image="${getImageUrl(product)}" data-stock="${product.stock}" class="btn btn-outline btn-full view-details">View Details</button>
+              <button data-id="${product.id}" data-name="${product.title}" data-price="${product.price}" data-description="${(product.description || 'Premium product available from ShopEase.').replace(/"/g, '"')}" data-image="${getImageUrl(product)}" data-stock="${product.stock}" class="btn btn-ghost btn-sm view-details">Details</button>
+              <button data-id="${product.id}" class="btn-heart add-wishlist" aria-label="Add to wishlist">♡</button>
             </div>
           </div>
         `;
@@ -359,7 +394,7 @@
 
     async function addToCart(productId) {
       if (!state.token) {
-        showAuthMessage('Login first to use the cart.');
+        showToast('Login first to use the cart.', 'warning');
         openAuthModal('login');
         return;
       }
@@ -368,18 +403,16 @@
           method: 'POST',
           body: { product_id: Number(productId), quantity: 1 }
         });
-        showAuthMessage(result.message || 'Added product to cart.');
         showToast('Added to cart!', 'success');
         refreshCartCount();
       } catch (error) {
-        showAuthMessage(error.detail || 'Unable to add item to cart.');
-        showToast('Failed to add to cart', 'error');
+        showToast(error.detail || 'Unable to add item to cart.', 'error');
       }
     }
 
     async function addToWishlist(productId) {
       if (!state.token) {
-        showAuthMessage('Login first to use the wishlist.');
+        showToast('Login first to use the wishlist.', 'warning');
         openAuthModal('login');
         return;
       }
@@ -388,198 +421,153 @@
           method: 'POST',
           body: { product_id: Number(productId) }
         });
-        showAuthMessage(result.message || 'Added to wishlist.');
         showToast('Added to wishlist!', 'success');
       } catch (error) {
-        showAuthMessage(error.detail || 'Unable to add wishlist item.');
-        showToast('Failed to add to wishlist', 'error');
+        showToast(error.detail || 'Unable to add wishlist item.', 'error');
       }
     }
 
-    async function removeCartItem(cartId) {
-      try {
-        await apiFetch(`/cart/${cartId}`, { method: 'DELETE' });
-        showAuthMessage('Item removed from cart.');
-        showToast('Removed from cart', 'info');
-        await loadCart();
-      } catch (error) {
-        showAuthMessage(error.detail || 'Unable to remove item.');
-        showToast('Failed to remove item', 'error');
-      }
-    }
-
-    async function checkoutCart() {
-      if (!state.token) {
-        showAuthMessage('Login first to checkout.');
-        openAuthModal('login');
-        return;
-      }
-      try {
-        const result = await apiFetch('/cart/checkout', {
-          method: 'POST',
-          body: { coupon_code: couponInput.value.trim() || null }
+    // ===== Auth tab switching (landing page) =====
+    function initAuthTabs(container) {
+      const tabs = container.querySelectorAll('.auth-tab');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const target = tab.dataset.tab;
+          const loginForm = container.querySelector('#login-form') || container.querySelector('#modal-login-form');
+          const registerForm = container.querySelector('#register-form') || container.querySelector('#modal-register-form');
+          if (loginForm) loginForm.style.display = target === 'login' ? 'flex' : 'none';
+          if (registerForm) registerForm.style.display = target === 'register' ? 'flex' : 'none';
         });
-        showAuthMessage(result.message ? `${result.message} Total: $${Number(result.total_price).toFixed(2)}` : 'Checkout complete.');
-        showToast('Order placed successfully!', 'success');
-        couponFeedback.textContent = result.discount_amount ? `Discount applied: $${Number(result.discount_amount).toFixed(2)}` : 'No discount applied.';
-        couponInput.value = '';
-        currentCoupon = '';
-        await loadCart();
-      } catch (error) {
-        showAuthMessage(error.detail || 'Checkout failed.');
-        showToast('Checkout failed', 'error');
-      }
+      });
     }
 
-    async function loadCart() {
-      if (!state.token) {
-        if (cartSummary) cartSummary.textContent = 'Sign in to view cart';
-        if (cartContainer) cartContainer.innerHTML = '';
-        if (checkoutButton) checkoutButton.disabled = true;
-        if (applyCouponButton) applyCouponButton.disabled = true;
-        return;
-      }
-      try {
-        const result = await apiFetch('/cart/');
-        if (cartContainer) cartContainer.innerHTML = '';
-        currentCoupon = couponInput.value.trim();
-        if (couponFeedback) couponFeedback.textContent = currentCoupon ? `Coupon '${currentCoupon}' ready to apply.` : 'Enter a coupon code and hit Apply.';
-        if (!result.length) {
-          if (cartSummary) cartSummary.textContent = '0 items · $0.00';
-          if (cartContainer) cartContainer.appendChild(createPanelItem('Your cart is empty', 'Add products to start shopping.'));
-          if (checkoutButton) checkoutButton.disabled = true;
-          if (applyCouponButton) applyCouponButton.disabled = false;
-          return;
-        }
-        const total = result.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
-        const quantity = result.reduce((sum, item) => sum + item.quantity, 0);
-        if (cartSummary) cartSummary.textContent = `${quantity} item(s) · $${total.toFixed(2)}`;
-        if (checkoutButton) checkoutButton.disabled = false;
-        if (applyCouponButton) applyCouponButton.disabled = false;
-        result.forEach(item => {
-          const card = document.createElement('div');
-          card.className = 'panel-card';
-          card.innerHTML = `
-            <div>
-              <strong>${item.product_name}</strong>
-              <span>${item.quantity} × $${item.price.toFixed(2)}</span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <button class="btn btn-sm btn-outline remove-cart" data-cart-id="${item.id}">Remove</button>
-            </div>
-          `;
-          if (cartContainer) cartContainer.appendChild(card);
-        });
-      } catch (error) {
-        if (cartSummary) cartSummary.textContent = error.detail || 'Unable to load cart.';
-      }
-    }
-
-    async function loadWishlist() {
-      if (!state.token) {
-        if (wishlistContainer) wishlistContainer.innerHTML = '';
-        return;
-      }
-      try {
-        const result = await apiFetch('/wishlist/');
-        if (wishlistContainer) wishlistContainer.innerHTML = '';
-        if (!result.length) {
-          if (wishlistContainer) wishlistContainer.appendChild(createPanelItem('Wishlist is empty', 'Save your favorite products here.'));
-          return;
-        }
-        result.forEach(item => {
-          const card = document.createElement('div');
-          card.className = 'panel-card';
-          card.innerHTML = `
-            <div>
-              <strong>${item.product_name}</strong>
-              <span>Saved to wishlist</span>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center;justify-content:flex-end;">
-              <button class="btn btn-sm btn-primary move-to-cart" data-id="${item.id}">Move to Cart</button>
-              <button class="btn btn-sm btn-outline remove-wishlist" data-id="${item.id}">Remove</button>
-            </div>
-          `;
-          if (wishlistContainer) wishlistContainer.appendChild(card);
-        });
-      } catch (error) {
-        if (wishlistContainer) wishlistContainer.innerHTML = '';
-      }
-    }
-
-    async function moveWishlistItem(wishlistId) {
-      try {
-        const result = await apiFetch(`/wishlist/${wishlistId}/move-to-cart`, {
-          method: 'POST',
-          body: { quantity: 1 }
-        });
-        showAuthMessage(result.message || 'Moved wishlist item to cart.');
-        showToast('Moved to cart!', 'success');
-        await loadCart();
-        await loadWishlist();
-      } catch (error) {
-        showAuthMessage(error.detail || 'Unable to move wishlist item.');
-        showToast('Failed to move item', 'error');
-      }
-    }
-
-    async function removeWishlistItem(wishlistId) {
-      try {
-        const result = await apiFetch(`/wishlist/${wishlistId}`, { method: 'DELETE' });
-        showAuthMessage(result.message || 'Removed from wishlist.');
-        showToast('Removed from wishlist', 'info');
-        await loadWishlist();
-      } catch (error) {
-        showAuthMessage(error.detail || 'Unable to remove item.');
-        showToast('Failed to remove item', 'error');
-      }
-    }
-
-    document.getElementById('login-form').addEventListener('submit', async event => {
+    // ===== Event listeners =====
+    document.getElementById('login-form')?.addEventListener('submit', async event => {
       event.preventDefault();
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
       if (!username || !password) {
-        showAuthMessage('Please enter username and password.');
+        document.getElementById('auth-message').textContent = 'Please enter username and password.';
         return;
       }
       try {
         const result = await loginUser(username, password);
-        showAuthMessage(`Welcome back, ${result.user.username}!`);
+        document.getElementById('auth-message').textContent = `Welcome back, ${result.user.username}!`;
         showToast('Signed in successfully!', 'success');
-        closeAuthModal();
         loadCart();
         loadWishlist();
       } catch (error) {
-        showAuthMessage(error.message || 'Login failed.');
+        document.getElementById('auth-message').textContent = error.message || 'Login failed.';
         showToast('Login failed', 'error');
       }
     });
 
-    document.getElementById('register-form').addEventListener('submit', async event => {
+    document.getElementById('register-form')?.addEventListener('submit', async event => {
       event.preventDefault();
       const username = document.getElementById('reg-username').value.trim();
       const email = document.getElementById('reg-email').value.trim();
       const password = document.getElementById('reg-password').value;
       if (!username || !email || !password) {
-        showAuthMessage('Please fill in all fields.');
+        document.getElementById('auth-message').textContent = 'Please fill in all fields.';
         return;
       }
       try {
         const result = await registerUser(username, email, password);
-        showAuthMessage(result.message || 'Account created! You can now sign in.');
+        document.getElementById('auth-message').textContent = result.message || 'Account created! You can now sign in.';
         showToast('Registration successful!', 'success');
         document.getElementById('reg-username').value = '';
         document.getElementById('reg-email').value = '';
         document.getElementById('reg-password').value = '';
       } catch (error) {
-        showAuthMessage(error.body?.detail || error.message || 'Registration failed.');
+        document.getElementById('auth-message').textContent = error.body?.detail || error.message || 'Registration failed.';
         showToast('Registration failed', 'error');
       }
     });
 
+    // Modal auth forms
+    document.getElementById('modal-login-form')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('modal-login-username').value.trim();
+      const password = document.getElementById('modal-login-password').value;
+      if (!username || !password) {
+        document.getElementById('modal-auth-feedback').textContent = 'Please enter username and password.';
+        return;
+      }
+      try {
+        const result = await loginUser(username, password);
+        document.getElementById('modal-auth-feedback').textContent = `Welcome back, ${result.user.username}!`;
+        showToast('Signed in successfully!', 'success');
+        closeAuthModal();
+        loadCart();
+        loadWishlist();
+      } catch (error) {
+        document.getElementById('modal-auth-feedback').textContent = error.message || 'Login failed.';
+        showToast('Login failed', 'error');
+      }
+    });
+
+    document.getElementById('modal-register-form')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('modal-reg-username').value.trim();
+      const email = document.getElementById('modal-reg-email').value.trim();
+      const password = document.getElementById('modal-reg-password').value;
+      if (!username || !email || !password) {
+        document.getElementById('modal-auth-feedback').textContent = 'Please fill in all fields.';
+        return;
+      }
+      try {
+        const result = await registerUser(username, email, password);
+        document.getElementById('modal-auth-feedback').textContent = result.message || 'Account created! You can now sign in.';
+        showToast('Registration successful!', 'success');
+        document.getElementById('modal-reg-username').value = '';
+        document.getElementById('modal-reg-email').value = '';
+        document.getElementById('modal-reg-password').value = '';
+      } catch (error) {
+        document.getElementById('modal-auth-feedback').textContent = error.body?.detail || error.message || 'Registration failed.';
+        showToast('Registration failed', 'error');
+      }
+    });
+
+    // Product grid event delegation
+    productsContainer.addEventListener('click', event => {
+      if (event.target.matches('.add-cart')) {
+        addToCart(event.target.dataset.id);
+      }
+      if (event.target.matches('.add-wishlist')) {
+        addToWishlist(event.target.dataset.id);
+      }
+      if (event.target.matches('.view-details')) {
+        const product = {
+          id: event.target.dataset.id,
+          title: event.target.dataset.name,
+          price: parseFloat(event.target.dataset.price),
+          description: event.target.dataset.description,
+          image: event.target.dataset.image,
+          stock: parseInt(event.target.dataset.stock, 10) || 0
+        };
+        openModal(product);
+      }
+    });
+
+    // Filter buttons
+    document.getElementById('apply-filters')?.addEventListener('click', loadProducts);
+    document.getElementById('clear-filters')?.addEventListener('click', () => {
+      searchInput.value = '';
+      minPriceInput.value = '';
+      maxPriceInput.value = '';
+      activeCategory = 'All';
+      loadProducts();
+    });
+
+    // Sort
+    document.getElementById('sort-select')?.addEventListener('change', loadProducts);
+
     window.addEventListener('DOMContentLoaded', async () => {
       ensureAuthMessage();
+      initAuthTabs(document.querySelector('.auth-card'));
+      initAuthTabs(document.getElementById('auth-modal'));
       try {
         await loadCategories();
       } catch (e) {
@@ -592,5 +580,3 @@
   </script>
 </body>
 </html>
-</parameter>
-</write_to_file>
